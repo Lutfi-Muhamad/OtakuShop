@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:otakushop/pages/login_page.dart';
+import 'package:otakushop/services/cart_service.dart';
 import '../models/product.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -141,11 +143,29 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pink,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
+              onPressed: () async {
+                final success = await CartService.addToCart(product.id);
+
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("✅ Berhasil ditambahkan ke cart"),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("⚠️ Harap login terlebih dahulu"),
+                    ),
+                  );
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginPage()),
+                  );
+                }
+              },
+
               child: const Text("Add To Cart", style: TextStyle(fontSize: 18)),
             ),
           ),
