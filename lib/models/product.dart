@@ -2,9 +2,9 @@ class Product {
   final int id;
   final String name;
   final String description;
-  final int? price; //null untuk wide dan promo
+  final int? price;
   final int stock;
-  final String image;
+  final List<String> images;
   final String imageType;
   final String aspectRatio;
 
@@ -14,7 +14,7 @@ class Product {
     required this.description,
     required this.price,
     required this.stock,
-    required this.image,
+    required this.images,
     required this.imageType,
     required this.aspectRatio,
   });
@@ -26,7 +26,7 @@ class Product {
       description: json['description'],
       price: json['price'],
       stock: json['stock'],
-      image: json['image'],
+      images: List<String>.from(json['images']), // ✅ FIX UTAMA DI SINI
       imageType: json['image_type'],
       aspectRatio: json['aspect_ratio'],
     );

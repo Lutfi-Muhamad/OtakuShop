@@ -195,7 +195,7 @@ class HomePage extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 image: DecorationImage(
-                  image: NetworkImage(p.image),
+                  image: NetworkImage(p.images.first),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -268,7 +268,11 @@ class HomePage extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 image: DecorationImage(
-                  image: NetworkImage(p.image),
+                  image: NetworkImage(
+                    p.images.isNotEmpty
+                        ? p.images.first
+                        : 'https://via.placeholder.com/150',
+                  ),
                   fit: BoxFit.cover,
                 ),
               ),

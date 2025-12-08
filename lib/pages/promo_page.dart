@@ -34,7 +34,7 @@ class PromoPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
-                    image: NetworkImage(p.image),
+                    image: NetworkImage(p.images.first),
                     fit: BoxFit.cover,
                   ),
                 ),
