@@ -3,6 +3,9 @@ import 'package:otakushop/common/footer.dart.dart';
 import 'package:otakushop/common/navbar.dart';
 import 'package:otakushop/common/searchbar.dart';
 import 'package:otakushop/pages/product_detail_page.dart';
+import 'package:otakushop/pages/promo_page.dart';
+import '../models/product.dart';
+import '../services/product_service.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -10,45 +13,84 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Color(0xFFF87DAF),
-            expandedHeight: 60,
-            flexibleSpace: const FlexibleSpaceBar(background: PinkNavbar()),
-          ),
+      body: FutureBuilder<List<Product>>(
+        future: ProductService.fetchProducts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                SizedBox(height: 20),
-                const SearchBarWidget(),
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text("Tidak ada"));
+          }
 
-                SizedBox(height: 20),
-                _buildBannerPromo(),
-                SizedBox(height: 20),
-                _buildCategories(),
-                SizedBox(height: 10),
-                _buildFilters(),
-                SizedBox(height: 20),
-                _buildProductGrid(context),
-                SizedBox(height: 30),
-                _buildTrending(),
-                SizedBox(height: 20),
-                _buildAnotherProductList(context),
-                SizedBox(height: 50),
-                _buildSeriesButton(),
-                SizedBox(height: 50),
-                const FooterWidget(),
-              ],
-            ),
-          ),
-        ],
+          final products = snapshot.data!;
+          final squares = products
+              .where((p) => p.imageType == "square")
+              .toList();
+          final wides = products.where((p) => p.imageType == "wide").toList();
+
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                backgroundColor: Color(0xFFF87DAF),
+                expandedHeight: 60,
+                flexibleSpace: const FlexibleSpaceBar(background: PinkNavbar()),
+              ),
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    SizedBox(height: 20),
+                    const SearchBarWidget(),
+
+                    SizedBox(height: 20),
+
+                    // ✅ PROMO BANNER (KLIK KE PROMO PAGE)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => PromoPage()),
+                        );
+                      },
+                      child: _buildBannerPromo(),
+                    ),
+
+                    SizedBox(height: 20),
+                    _buildCategories(),
+                    SizedBox(height: 10),
+                    _buildFilters(),
+                    SizedBox(height: 20),
+
+                    // ✅ GRID PRODUK DARI API (SQUARE)
+                    _buildProductGrid(context, squares),
+
+                    SizedBox(height: 30),
+
+                    // ✅ TRENDING DARI API (WIDE)
+                    if (wides.isNotEmpty) _buildTrending(wides.first),
+
+                    SizedBox(height: 20),
+
+                    // ✅ LIST BAWAH JUGA DARI API
+                    _buildAnotherProductList(context, squares),
+
+                    SizedBox(height: 50),
+                    _buildSeriesButton(),
+                    SizedBox(height: 50),
+                    const FooterWidget(),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
+  // ==================== PROMO ====================
   Widget _buildBannerPromo() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20),
@@ -70,6 +112,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  // ==================== CATEGORIES ====================
   Widget _buildCategories() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -104,31 +147,31 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProductGrid(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
+  // ==================== GRID PRODUK ====================
+  Widget _buildProductGrid(BuildContext context, List<Product> products) {
+    return GridView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 20,
-      crossAxisSpacing: 20,
-      childAspectRatio: 0.65,
+      itemCount: products.length,
       padding: EdgeInsets.symmetric(horizontal: 20),
-      children: [
-        _productCard(context, "Gojo Satoru - Nendoroid", "IDR 350,000"),
-        _productCard(context, "Nami - Nendoroid", "IDR 350,000"),
-      ],
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 20,
+        crossAxisSpacing: 20,
+        childAspectRatio: 0.65,
+      ),
+      itemBuilder: (context, i) {
+        return _productCard(context, products[i]);
+      },
     );
   }
 
-  // FIX: tambahkan BuildContext di parameter
-  Widget _productCard(BuildContext context, String title, String price) {
+  Widget _productCard(BuildContext context, Product p) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ProductDetailPage(title: title, price: price),
-          ),
+          MaterialPageRoute(builder: (_) => ProductDetailPage(product: p)),
         );
       },
       child: Container(
@@ -146,15 +189,15 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar
+            // ✅ GAMBAR DARI API
             Container(
               height: 150,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                image: DecorationImage(
+                  image: NetworkImage(p.image),
+                  fit: BoxFit.cover,
                 ),
-                color: Colors.grey.shade300,
               ),
             ),
 
@@ -162,6 +205,7 @@ class HomePage extends StatelessWidget {
 
             // Badge
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 8),
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.purple,
@@ -175,11 +219,11 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Title
+            // ✅ TITLE DARI API
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                title,
+                p.name,
                 style: TextStyle(fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -188,25 +232,22 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 4),
 
-            // Price
+            // ✅ HARGA DARI API
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                price,
+                "IDR ${p.price}",
                 style: TextStyle(color: Colors.red),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-
-            const SizedBox(height: 8),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTrending() {
+  // ==================== TRENDING (WIDE) ====================
+  Widget _buildTrending(Product p) {
     return Column(
       children: [
         Container(
@@ -216,23 +257,43 @@ class HomePage extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
         ),
-        Container(
-          height: 160,
-          margin: EdgeInsets.symmetric(horizontal: 20),
-          color: Colors.grey.shade200,
+        GestureDetector(
+          onTap: () {
+            // jika mau klik trending -> promo juga bisa
+          },
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: DecorationImage(
+                  image: NetworkImage(p.image),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  // FIX: tambah parameter context
-  Widget _buildAnotherProductList(BuildContext context) {
+  // ==================== LIST BAWAH ====================
+  Widget _buildAnotherProductList(
+    BuildContext context,
+    List<Product> products,
+  ) {
     return Column(
-      children: [
-        _productCard(context, "Gojo Satoru - Nendoroid", "IDR 500,000"),
-        SizedBox(height: 20),
-        _productCard(context, "Gojo Satoru - Nendoroid", "IDR 500,000"),
-      ],
+      children: products
+          .take(2)
+          .map(
+            (p) => Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: _productCard(context, p),
+            ),
+          )
+          .toList(),
     );
   }
 
