@@ -124,7 +124,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _categoryItem(IconData icon, String label) {
+  Widget _categoryItem(IconData icon, String label, ) {
     return Column(
       children: [
         CircleAvatar(radius: 28, child: Icon(icon, size: 30)),
@@ -273,6 +273,7 @@ class HomePage extends StatelessWidget {
                         ? p.images.first
                         : 'https://via.placeholder.com/150',
                   ),
+
                   fit: BoxFit.cover,
                 ),
               ),

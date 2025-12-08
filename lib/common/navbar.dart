@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:otakushop/pages/user_profile_page.dart';
+import '../pages/cart_page.dart';
+
+
 
 class PinkNavbar extends StatelessWidget {
   const PinkNavbar({super.key});
@@ -9,15 +13,60 @@ class PinkNavbar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         height: 60,
+        color: Colors.pink,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.menu, color: Colors.white, size: 28),
+            // =======================
+            // MENU ICON
+            // =======================
+            GestureDetector(
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Menu ditekan")),
+                );
+              },
+              child: const Icon(Icons.menu, color: Colors.white, size: 28),
+            ),
+
+            // =======================
+            // CART + PROFILE
+            // =======================
             Row(
-              children: const [
-                Icon(Icons.shopping_cart, color: Colors.white),
-                SizedBox(width: 20),
-                Icon(Icons.person, color: Colors.white),
+              children: [
+                // ===== CART =====
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CartPage(),
+                      ),
+                    );
+                  },
+                  child: const Icon(
+                    Icons.shopping_cart,
+                    color: Colors.white,
+                  ),
+                ),
+
+                const SizedBox(width: 20),
+
+                // ===== PROFILE =====
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const UserPage(),
+                      ),
+                    );
+                  },
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ],
