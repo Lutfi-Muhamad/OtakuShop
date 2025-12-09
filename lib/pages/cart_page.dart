@@ -17,8 +17,22 @@ class _CartPageState extends State<CartPage> {
   @override
   void initState() {
     super.initState();
+    checkAuth();
+  }
+
+  Future<void> checkAuth() async {
+  final token = await AuthService.getToken();
+
+  if (token == null) {
+    // Tidak ada token, tendang ke login
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  } else {
     fetchCart();
   }
+}
+
 
   // =========================
   // GET CART FROM API

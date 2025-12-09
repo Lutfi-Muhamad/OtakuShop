@@ -57,6 +57,32 @@ class AuthService {
   // ======================
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('token');
+  }
+
+  // cek token
+  static Future<bool> hasToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') != null;
+  }
+
+  // get user
+  static Future<Map<String, dynamic>?> getUser() async {
+    final token = await getToken();
+    if (token == null) return null;
+
+    final res = await http.get(
+      Uri.parse("$baseUrl/user"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    }
+
+    return null;
   }
 }
