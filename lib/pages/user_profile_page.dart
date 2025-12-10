@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-// import 'cart_page.dart';
+import 'package:otakushop/pages/seller_page.dart';
+import 'package:otakushop/pages/seller_register_page.dart';
 import '../services/auth_service.dart';
 import 'profile_edit_page.dart';
 
@@ -140,24 +141,41 @@ class _UserPageState extends State<UserPage> {
                 const SizedBox(height: 30),
 
                 // ------------------------------ SELLER BUTTON
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFD6E2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: const Text(
-                      "TOMBOL\nSELER",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
+               Center(
+  child: InkWell(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) =>  SellerPage()),
+      );
+    },
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink.withOpacity(0.4),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFF57CA1), width: 2),
+      ),
+      child: const Text(
+        "DAFTAR\nSEBAGAI SELLER",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFFF57CA1),
+        ),
+      ),
+    ),
+  ),
+),
+
 
                 const SizedBox(height: 50),
 
