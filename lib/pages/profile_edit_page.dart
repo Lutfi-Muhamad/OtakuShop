@@ -1,0 +1,111 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../services/auth_service.dart';
+import 'package:image_picker/image_picker.dart';
+
+
+class ProfileEditPage extends StatefulWidget {
+  final Map<String, dynamic> userData;
+  const ProfileEditPage({super.key, required this.userData});
+
+  @override
+  State<ProfileEditPage> createState() => _ProfileEditPageState();
+}
+
+class _ProfileEditPageState extends State<ProfileEditPage> {
+  late TextEditingController nameC;
+  late TextEditingController bioC;
+  late TextEditingController addressC;
+
+  File? photoFile;
+
+  @override
+  void initState() {
+    super.initState();
+    nameC = TextEditingController(text: widget.userData["name"]);
+    bioC = TextEditingController(text: widget.userData["bio"]);
+    addressC = TextEditingController(text: widget.userData["address"]);
+  }
+
+  Future pickPhoto() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        photoFile = File(picked.path);
+      });
+    }
+  }
+
+  Future saveProfile() async {
+    final ok = await AuthService.updateProfile(
+      name: nameC.text,
+      bio: bioC.text,
+      address: addressC.text,
+      photoFile: photoFile,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Profil berhasil diupdate")));
+      Navigator.pop(context, true); // kembali + refresh
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Gagal update profil")));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Edit Profile")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // FOTO PROFIL
+            GestureDetector(
+              onTap: pickPhoto,
+              child: CircleAvatar(
+                radius: 50,
+                backgroundImage: photoFile != null
+                    ? FileImage(photoFile!)
+                    : (widget.userData["photo"] != null
+                          ? NetworkImage(widget.userData["photo"])
+                          : null),
+                child: (photoFile == null && widget.userData["photo"] == null)
+                    ? const Icon(Icons.person, size: 50)
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            TextField(
+              controller: nameC,
+              decoration: const InputDecoration(labelText: "Nama"),
+            ),
+            const SizedBox(height: 15),
+
+            TextField(
+              controller: bioC,
+              decoration: const InputDecoration(labelText: "Bio"),
+            ),
+            const SizedBox(height: 15),
+
+            TextField(
+              controller: addressC,
+              decoration: const InputDecoration(labelText: "Alamat"),
+            ),
+            const SizedBox(height: 25),
+
+            ElevatedButton(onPressed: saveProfile, child: const Text("Simpan")),
+          ],
+        ),
+      ),
+    );
+  }
+}

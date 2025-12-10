@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+
 
 class AuthService {
   static const String baseUrl =
@@ -90,5 +92,37 @@ class AuthService {
       return jsonDecode(res.body);
     }
     throw Exception('Unauthenticated');
+  }
+
+  // ======================
+  // UPDATE USER
+  // ======================
+  static Future<bool> updateProfile({
+    required String name,
+    required String? bio,
+    required String? address,
+    File? photoFile,
+  }) async {
+    final token = await getToken();
+    final uri = Uri.parse("$baseUrl/user/update");
+
+    var request = http.MultipartRequest("POST", uri);
+    request.headers['Authorization'] = "Bearer $token";
+    request.fields['name'] = name;
+    request.fields['bio'] = bio ?? "";
+    request.fields['address'] = address ?? "";
+
+    if (photoFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('photo', photoFile.path),
+      );
+    }
+
+    var response = await request.send();
+    var responseData = await response.stream.bytesToString();
+
+    final json = jsonDecode(responseData);
+
+    return json["status"] == true;
   }
 }
