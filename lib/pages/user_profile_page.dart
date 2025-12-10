@@ -26,7 +26,7 @@ class _UserPageState extends State<UserPage> {
       if (!mounted) return;
 
       setState(() {
-        user = u;
+        user = u["user"]; // AMBIL ISI DALAM "user"
         loading = false;
       });
     } catch (e) {
@@ -38,9 +38,7 @@ class _UserPageState extends State<UserPage> {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -52,7 +50,6 @@ class _UserPageState extends State<UserPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 // ------------------------------ TOP BAR
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,7 +107,6 @@ class _UserPageState extends State<UserPage> {
                   ),
                   child: Column(
                     children: [
-
                       // FOTO PROFIL
                       CircleAvatar(
                         radius: 40,
@@ -126,7 +122,10 @@ class _UserPageState extends State<UserPage> {
 
                       infoItem("Nama", user?["name"]),
                       infoItem("Bio", user?["bio"] ?? "Belum ada bio"),
-                      infoItem("Alamat", user?["address"] ?? "Belum ada alamat"),
+                      infoItem(
+                        "Alamat",
+                        user?["address"] ?? "Belum ada alamat",
+                      ),
                     ],
                   ),
                 ),
@@ -184,8 +183,10 @@ class _UserPageState extends State<UserPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
           Text(value ?? "-", style: const TextStyle(fontSize: 14)),
         ],
       ),
@@ -205,10 +206,7 @@ class _UserPageState extends State<UserPage> {
           borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-            child: Text(
-              text,
-              style: const TextStyle(color: Colors.red),
-            ),
+            child: Text(text, style: const TextStyle(color: Colors.red)),
           ),
         ),
       ),
