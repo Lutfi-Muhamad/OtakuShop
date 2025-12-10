@@ -33,9 +33,11 @@ class AuthService {
       body: jsonEncode({"email": email, "password": password}),
     );
 
+    if (res.statusCode != 200) return false;
+
     final data = jsonDecode(res.body);
 
-    if (res.statusCode == 200 && data['token'] != null) {
+    if (data['token'] != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', data['token']);
       return true;
@@ -45,44 +47,48 @@ class AuthService {
   }
 
   // ======================
-  // GET TOKEN
+  // TOKEN
   // ======================
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
 
-  // ======================
-  // LOGOUT
-  // ======================
   static Future<void> logout() async {
+    final token = await getToken();
+
+    if (token != null) {
+      await http.post(
+        Uri.parse("$baseUrl/logout"),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Accept": "application/json",
+        },
+      );
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
   }
 
-  // cek token
-  static Future<bool> hasToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token') != null;
-  }
-
-  // get user
-  static Future<Map<String, dynamic>?> getUser() async {
+  // ======================
+  // FETCH USER (INI KUNCI)
+  // ======================
+  static Future<Map<String, dynamic>> fetchUser() async {
     final token = await getToken();
-    if (token == null) return null;
+
+    if (token == null) {
+      throw Exception('No token');
+    }
 
     final res = await http.get(
       Uri.parse("$baseUrl/user"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
+      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
     );
 
-    if (res.statusCode == 200) {
+    if (res.statusCode == 200 || res.statusCode == 201) {
       return jsonDecode(res.body);
     }
-
-    return null;
+    throw Exception('Unauthenticated');
   }
 }

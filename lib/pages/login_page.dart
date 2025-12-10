@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("✅ Login Berhasil")));
-      Navigator.pop(context);
+      Navigator.pushReplacementNamed(context, '/');
     } else {
       ScaffoldMessenger.of(
         context,

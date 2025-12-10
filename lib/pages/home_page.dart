@@ -124,7 +124,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _categoryItem(IconData icon, String label, ) {
+  Widget _categoryItem(IconData icon, String label) {
     return Column(
       children: [
         CircleAvatar(radius: 28, child: Icon(icon, size: 30)),
@@ -167,6 +167,9 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _productCard(BuildContext context, Product p) {
+    final hasImage = p.images.isNotEmpty;
+    final imageUrl = hasImage ? p.images.first : null;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -178,7 +181,7 @@ class HomePage extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               color: Colors.black12,
               blurRadius: 4,
@@ -189,29 +192,37 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ GAMBAR DARI API
+            // ✅ GAMBAR AMAN
             Container(
               height: 150,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                image: DecorationImage(
-                  image: NetworkImage(p.images.first),
-                  fit: BoxFit.cover,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
                 ),
+                image: hasImage
+                    ? DecorationImage(
+                        image: NetworkImage(imageUrl!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+                color: hasImage ? null : Colors.grey.shade200,
               ),
+              child: !hasImage
+                  ? const Center(child: Icon(Icons.image_not_supported))
+                  : null,
             ),
 
             const SizedBox(height: 8),
 
             // Badge
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 8),
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.purple,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
+              child: const Text(
                 "Limited",
                 style: TextStyle(color: Colors.white, fontSize: 12),
               ),
@@ -219,25 +230,23 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // ✅ TITLE DARI API
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 p.name,
-                style: TextStyle(fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
 
             const SizedBox(height: 4),
 
-            // ✅ HARGA DARI API
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
-                "IDR ${p.price}",
-                style: TextStyle(color: Colors.red),
+                p.price != null ? "IDR ${p.price}" : "—",
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ],

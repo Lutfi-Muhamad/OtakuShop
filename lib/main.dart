@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otakushop/pages/home_page.dart';
+import 'package:otakushop/pages/login_page.dart';
+import 'package:otakushop/pages/user_profile_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,10 +16,18 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Anime Store',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFF87DAF)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFF87DAF)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+
+      // entry point aplikasi
+      initialRoute: '/',
+
+      routes: {
+        '/': (context) => const HomePage(),
+        '/login': (context) => const LoginPage(),
+        '/profile': (context) => const UserPage(),
+      },
     );
   }
 }
