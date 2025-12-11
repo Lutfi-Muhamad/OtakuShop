@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'cart_page.dart';
+import 'package:otakushop/pages/seller_register_page.dart';
 import '../services/auth_service.dart';
 import 'profile_edit_page.dart';
 
@@ -26,7 +26,7 @@ class _UserPageState extends State<UserPage> {
       if (!mounted) return;
 
       setState(() {
-        user = u["user"]; // AMBIL ISI DALAM "user"
+        user = u["user"];
         loading = false;
       });
     } catch (e) {
@@ -42,7 +42,7 @@ class _UserPageState extends State<UserPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF57CA1), // PINK BACKGROUND
+      backgroundColor: const Color(0xFFF57CA1),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -54,13 +54,10 @@ class _UserPageState extends State<UserPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // BACK BUTTON
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
-
-                    // EDIT BUTTON
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
                       onPressed: () {
@@ -107,7 +104,6 @@ class _UserPageState extends State<UserPage> {
                   ),
                   child: Column(
                     children: [
-                      // FOTO PROFIL
                       CircleAvatar(
                         radius: 40,
                         backgroundImage: user?["photo"] != null
@@ -141,33 +137,36 @@ class _UserPageState extends State<UserPage> {
 
                 // ------------------------------ SELLER BUTTON
                 Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFD6E2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.pink,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 20,
+                        horizontal: 40,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Colors.pink, width: 2),
+                      ),
+                      elevation: 4,
                     ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => SellerRegisterPage()),
+                      );
+                    },
                     child: const Text(
-                      "TOMBOL\nSELER",
+                      "DAFTAR\nSEBAGAI SELLER",
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 50),
-
-                // ------------------------------ ILLUSTRATION BOX
-                // Center(
-                //   child: Image.asset(
-                //     "assets/chest.png", // sesuaikan asset kamu
-                //     width: 140,
-                //   ),
-                // ),
               ],
             ),
           ),
@@ -176,7 +175,9 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  // WIDGET ITEM INFORMASI
+  // ==========================================
+  // WIDGET BUILDER (TARUH DI LUAR BUILD)
+  // ==========================================
   Widget infoItem(String title, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -193,7 +194,6 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  // WIDGET MENU LIST
   Widget menuButton(String text, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
