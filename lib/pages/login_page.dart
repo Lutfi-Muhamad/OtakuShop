@@ -1,6 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:otakushop/pages/home_page.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
+import 'package:get/get.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../services/auth_controller.dart';
+
+
+class logiclogin extends GetxController {
+  var email = ''.obs;
+  var password = ''.obs;
+Future<void> login() async {
+  if (email.value.isEmpty || password.value.isEmpty) {
+    Get.snackbar('Error', 'Email dan password harus diisi');
+    return;
+  }
+
+  try {
+    final payload = {'email': email.value, 'password': password.value};
+    final response = await http.post(
+      Uri.parse('${AuthController.baseUrl}/login'),
+      headers: {'Content-Type': 'application/json; charset=UTF-8'},
+      body: jsonEncode(payload),
+    );
+
+    if (response.statusCode == 200) {
+      String namaUser = email.value;
+      final auth = Get.put(AuthController(), permanent: true);
+      try {
+        final body = json.decode(response.body);
+        if (body is Map) {
+          final token =
+              (body['access_token'] ?? body['token'] ?? body['data']?['token'])
+                  ?.toString();
+          if (token != null && token.isNotEmpty) {
+            await auth.saveToken(token);
+          }
+        }
+      } catch (_) {}
+      auth.userName.value = namaUser;
+      Get.snackbar('Sukses', 'Login berhasil, selamat datang $namaUser');
+      Get.offAll(HomePage(), arguments: namaUser);
+    } else {
+      String msg = 'Login gagal. Status: ${response.statusCode}';
+      try {
+        final body = json.decode(response.body);
+        if (body is Map && body.containsKey('message'))
+          msg = body['message'].toString();
+      } catch (_) {}
+      Get.snackbar('Error', msg);
+    }
+  } catch (e) {
+    Get.snackbar('Error', 'Gagal login: $e');
+  }
+}
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,7 +71,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void doLogin() async {
     setState(() => loading = true);
-    final success = await AuthService.login(email.text, password.text);
+    final success = await logiclogin(email.text, password.text);
     setState(() => loading = false);
 
     if (success) {

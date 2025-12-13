@@ -19,35 +19,60 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
   Future<void> submitStore() async {
     setState(() => loading = true);
 
-    final result = await StoreService.registerStore(
-      name: nameCtrl.text.trim(),
-      phone: numberCtrl.text.trim(),
-      address: addressCtrl.text.trim(),
-    );
+    try {
+      final result = await StoreService.registerStore(
+        name: nameCtrl.text.trim(),
+        phone: numberCtrl.text.trim(),
+        address: addressCtrl.text.trim(),
+      );
 
-    setState(() => loading = false);
+      // DEBUG UTAMA
+      print("REGISTER STORE RESULT:");
+      print(result);
 
-    // Timeout atau gagal request
-    if (result["success"] == false && result.containsKey("error")) {
+      setState(() => loading = false);
+
+      // Timeout / error di service
+      if (result["success"] == false && result.containsKey("error")) {
+        print("ERROR TYPE: SERVICE / NETWORK");
+        print("ERROR MESSAGE: ${result['error']}");
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal: ${result['error']}")));
+        return;
+      }
+
+      // Sukses
+      if (result["success"] == true) {
+        print("REGISTER STORE SUCCESS");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Toko berhasil didaftarkan!")),
+        );
+        Navigator.pop(context);
+        return;
+      }
+
+      // Gagal dari backend (400 / 500)
+      print("ERROR TYPE: BACKEND RESPONSE");
+      print("STATUS / BODY: ${result['body']}");
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Gagal: ${result['error']}")));
-      return;
-    }
+      ).showSnackBar(SnackBar(content: Text("Gagal: ${result['body']}")));
+    } catch (e, stack) {
+      setState(() => loading = false);
 
-    // Respons sukses (200/201)
-    if (result["success"] == true) {
+      // ERROR YANG BENAR-BENAR GA KETANGKAP
+      print("FATAL ERROR REGISTER STORE");
+      print(e);
+      print(stack);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Toko berhasil didaftarkan!")),
+        const SnackBar(content: Text("Terjadi kesalahan tak terduga")),
       );
-      Navigator.pop(context);
-      return;
     }
-
-    // Respons gagal dari server (status 400 / 500)
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Gagal: ${result['body']}")));
   }
 
   @override

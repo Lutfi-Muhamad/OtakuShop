@@ -1,51 +1,49 @@
-import 'package:otakushop/services/auth_service.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'auth_controller.dart';
 
 class StoreService {
   static const baseUrl =
-      "https://hubbly-salma-unmaterialistically.ngrok-free.dev";
+      "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api";
 
   static Future<Map<String, dynamic>> registerStore({
     required String name,
     required String phone,
     required String address,
   }) async {
-    final token = await AuthService.getToken(); // ← WAJIB
+    final auth = Get.find<AuthController>();
+    await auth.loadToken(); // JANGAN ASUMSI
 
-    if (token == null) {
-      return {
-        "success": false,
-        "error": "Token not found. User might not be logged in.",
-      };
+    if (auth.token.value.isEmpty) {
+      return {"success": false, "error": "User belum login", "statusCode": 401};
     }
 
-    final url = Uri.parse("$baseUrl/api/store/register");
+    final url = Uri.parse("$baseUrl/store/register");
 
     try {
-      final response = await http
-          .post(
-            url,
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer $token", // ← INI YANG KAMU KURANGI
-              "Accept": "application/json",
-            },
-            body: jsonEncode({
-              "name": name,
-              "phone": phone,
-              "address": address,
-            }),
-          )
-          .timeout(const Duration(seconds: 30));
+      final response = await http.post(
+        url,
+        headers: auth.headers(),
+        body: jsonEncode({"name": name, "phone": phone, "address": address}),
+      );
+
+      print("[STORE REGISTER] status: ${response.statusCode}");
+      print("[STORE REGISTER] body: ${response.body}");
+
+      final data = response.body.isNotEmpty ? jsonDecode(response.body) : {};
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {"success": true, "message": data["message"]};
+      }
 
       return {
-        "success": response.statusCode == 200 || response.statusCode == 201,
+        "success": false,
+        "error": data["message"] ?? "Terjadi kesalahan",
         "statusCode": response.statusCode,
-        "body": response.body,
       };
     } catch (e) {
-      return {"success": false, "error": e.toString()};
+      return {"success": false, "error": "Request gagal: $e", "statusCode": 0};
     }
   }
 }

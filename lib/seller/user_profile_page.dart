@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/pages/seller_register_page.dart';
+import 'package:otakushop/seller/seller_page.dart';
+import 'package:otakushop/seller/seller_register_page.dart';
 import '../services/auth_service.dart';
-import 'profile_edit_page.dart';
+import '../pages/profile_edit_page.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -151,16 +152,33 @@ class _UserPageState extends State<UserPage> {
                       ),
                       elevation: 4,
                     ),
+
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => SellerRegisterPage()),
-                      );
+                      if (user?["store_id"] == null) {
+                        // BELUM PUNYA TOKO → Daftar
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SellerRegisterPage(),
+                          ),
+                        );
+                      } else {
+                        // SUDAH PUNYA TOKO → Kelola
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SellerPage(),
+                          ), // Pastikan sudah import
+                        );
+                      }
                     },
-                    child: const Text(
-                      "DAFTAR\nSEBAGAI SELLER",
+
+                    child: Text(
+                      user?["store_id"] == null
+                          ? "DAFTAR\nSEBAGAI SELLER"
+                          : "KELOLA\nTOKO",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),

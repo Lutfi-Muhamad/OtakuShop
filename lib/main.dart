@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:otakushop/pages/home_page.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/pages/login_page.dart';
-import 'package:otakushop/pages/user_profile_page.dart';
+import 'package:otakushop/seller/user_profile_page.dart';
+import 'package:get/get.dart';
+
 
 void main() {
+  runApp(const MyApp());
+  Get.put(AuthController(), permanent: true);
   runApp(const MyApp());
 }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/pages/user_profile_page.dart';
+import 'package:otakushop/seller/user_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

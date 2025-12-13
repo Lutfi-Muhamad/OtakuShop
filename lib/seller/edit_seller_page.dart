@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/pages/seller_profile_page.dart';
+import 'package:otakushop/seller/seller_profile_page.dart';
 import 'seller_page.dart';
 import 'user_profile_page.dart';
 

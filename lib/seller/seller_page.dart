@@ -1,18 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/pages/edit_seller_page.dart';
+import 'package:otakushop/services/seller_product_service.dart';
+import 'package:otakushop/seller/edit_seller_page.dart';
 import 'package:otakushop/pages/home_page.dart';
-import 'package:otakushop/pages/seller_profile_page.dart';
-import 'package:otakushop/pages/user_profile_page.dart';
+import 'package:otakushop/seller/seller_profile_page.dart';
 import 'add_product_page.dart';
 
-// TAMBAHKAN HALAMAN YANG LO TUJU
-import 'package:otakushop/pages/home_page.dart';
-
-import 'package:otakushop/pages/edit_seller_page.dart';
-// import 'delete_seller_page.dart';
-
-class SellerPage extends StatelessWidget {
+class SellerPage extends StatefulWidget {
   const SellerPage({super.key});
+
+  @override
+  State<SellerPage> createState() => _SellerPageState();
+}
+
+class _SellerPageState extends State<SellerPage> {
+  final SellerProductService productService = SellerProductService();
+
+  List<dynamic> myProducts = [];
+  bool loading = true;
+
+  int yourTokoId = 1; // Ubah sesuai data sesi seller
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  void fetchProducts() async {
+    try {
+      final products = await productService.getProductsByToko(yourTokoId);
+
+      setState(() {
+        myProducts = products;
+        loading = false;
+      });
+    } catch (e) {
+      setState(() => loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +48,7 @@ class SellerPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // =========================
-              //      TOP NAVBAR
-              // =========================
+              // TOP NAVBAR
               Container(
                 height: 60,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -34,7 +57,6 @@ class SellerPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Icon(Icons.menu, color: Colors.black, size: 30),
-
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -56,14 +78,11 @@ class SellerPage extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // =========================
-              // BACK BUTTON + SEARCH
-              // =========================
+              // BACK + SEARCH
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    // BACK TO HOME
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(
@@ -73,9 +92,7 @@ class SellerPage extends StatelessWidget {
                       },
                       child: const Icon(Icons.arrow_back, size: 28),
                     ),
-
                     const SizedBox(width: 10),
-
                     Expanded(
                       child: Container(
                         height: 40,
@@ -113,9 +130,6 @@ class SellerPage extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // =========================
-              //        TITLE
-              // =========================
               const Center(
                 child: Text(
                   "My Products",
@@ -125,48 +139,56 @@ class SellerPage extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // =========================
-              //      PRODUCT GRID
-              // =========================
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  crossAxisCount: 2,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.68,
-                  children: [
-                    productCard(
-                      context,
-                      "Gojo Satoru – Nendoroid Original Flash Order",
-                      "IDR 500.000",
-                      "https://i.imgur.com/rE9Y6LZ.jpeg",
-                    ),
-
-                    productCard(
-                      context,
-                      "Nami – Nendoroid Original Flash Order",
-                      "IDR 500.000",
-                      "https://i.imgur.com/w1FQ5kG.jpeg",
-                    ),
-
-                    placeholderBox(),
-                    placeholderBox(),
-                    placeholderBox(),
-                    placeholderBox(),
-                  ],
+              // LOADING
+              if (loading)
+                const Center(
+                  child: CircularProgressIndicator(color: Colors.pinkAccent),
                 ),
-              ),
+
+              // JIKA PRODUK KOSONG
+              if (!loading && myProducts.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Text(
+                      "Kamu belum memiliki barang yang bisa dijual",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // GRID PRODUK
+              if (!loading && myProducts.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    crossAxisCount: 2,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.68,
+                    children: List.generate(myProducts.length, (i) {
+                      final p = myProducts[i];
+                      return productCard(
+                        context,
+                        p["name"] ?? "",
+                        "IDR ${p['price']}",
+                        p["images"] != null && p["images"].isNotEmpty
+                            ? p["images"][0]
+                            : "https://via.placeholder.com/150",
+                      );
+                    }),
+                  ),
+                ),
             ],
           ),
         ),
       ),
 
-      // =========================
-      //     FLOATING BUTTON
-      // =========================
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.pinkAccent,
         shape: const CircleBorder(),
@@ -181,9 +203,10 @@ class SellerPage extends StatelessWidget {
     );
   }
 
-  // ==========================================================
-  //                PRODUCT CARD (TELAH DITAMBAH EDIT/DELETE)
-  // ==========================================================
+  // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+  //                 PRODUCT CARD
+  // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+
   Widget productCard(
     BuildContext context,
     String title,
@@ -198,11 +221,9 @@ class SellerPage extends StatelessWidget {
         ),
         const SizedBox(height: 6),
 
-        // LIMITED + EDIT + DELETE
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // LIMITED TAG
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -217,7 +238,6 @@ class SellerPage extends StatelessWidget {
 
             const SizedBox(width: 6),
 
-            // EDIT
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -230,7 +250,6 @@ class SellerPage extends StatelessWidget {
 
             const SizedBox(width: 8),
 
-            // // DELETE
             GestureDetector(
               onTap: () {
                 showDialog(
@@ -246,11 +265,8 @@ class SellerPage extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 20),
-
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // BATAL
                             Expanded(
                               child: GestureDetector(
                                 onTap: () => Navigator.pop(context),
@@ -268,16 +284,13 @@ class SellerPage extends StatelessWidget {
                                 ),
                               ),
                             ),
-
                             const SizedBox(width: 10),
-
-                            // IYA
                             Expanded(
                               child: GestureDetector(
-                                // onTap: () {
-                                //   Navigator.pop(context);
-                                //   de(); // Panggil fungsi hapus
-                                // },
+                                onTap: () {
+                                  // TODO: Tambahkan delete jika sudah ada endpoint
+                                  Navigator.pop(context);
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 12,
@@ -306,7 +319,6 @@ class SellerPage extends StatelessWidget {
 
         const SizedBox(height: 6),
 
-        // TITLE
         Text(
           title,
           textAlign: TextAlign.center,
@@ -315,7 +327,6 @@ class SellerPage extends StatelessWidget {
 
         const SizedBox(height: 6),
 
-        // PRICE
         Text(
           price,
           style: const TextStyle(
@@ -325,18 +336,6 @@ class SellerPage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  // =========================
-  //   EMPTY PRODUCT SLOT
-  // =========================
-  Widget placeholderBox() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(10),
-      ),
     );
   }
 }
