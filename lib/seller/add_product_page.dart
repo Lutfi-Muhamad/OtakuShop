@@ -71,17 +71,14 @@ class _AddProductPageState extends State<AddProductPage> {
   // SUBMIT
   // ==============================
   Future<void> submitProduct() async {
+    // ================= VALIDASI =================
     if (selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pilih minimal 1 foto dulu")),
-      );
+      showMsg("Pilih minimal 1 foto");
       return;
     }
 
     if (selectedSeries == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pilih series produk terlebih dahulu")),
-      );
+      showMsg("Pilih series produk terlebih dahulu");
       return;
     }
 
@@ -89,32 +86,37 @@ class _AddProductPageState extends State<AddProductPage> {
         priceController.text.isEmpty ||
         stockController.text.isEmpty ||
         descController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Isi semua form terlebih dahulu")),
-      );
+      showMsg("Isi semua form terlebih dahulu");
       return;
     }
 
-    bool send = await productService.createProduct(
-      name: nameController.text,
-      description: descController.text,
-      price: int.parse(priceController.text),
-      stock: int.parse(stockController.text),
-      folder: selectedSeries!, // onepiece atau jjk
-      tokoId: tokoId,
-      images: selectedImages,
-    );
-
-    if (send) {
-      Navigator.pop(context); // kembali
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Produk berhasil ditambahkan")),
+    // ================= SUBMIT =================
+    try {
+      final result = await productService.createProduct(
+        name: nameController.text,
+        description: descController.text,
+        price: int.parse(priceController.text),
+        stock: int.parse(stockController.text),
+        folder: selectedSeries!,
+        tokoId: tokoId,
+        images: selectedImages,
       );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Gagal upload produk")));
+
+      if (!mounted) return;
+
+      if (result["success"] == true) {
+        Navigator.pop(context);
+        showMsg("Produk berhasil ditambahkan");
+      } else {
+        showMsg(result["message"] ?? "Gagal upload produk");
+      }
+    } catch (e) {
+      showMsg("Koneksi ke server gagal");
     }
+  }
+
+  void showMsg(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   // ==============================

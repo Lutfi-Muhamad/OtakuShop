@@ -1,94 +1,163 @@
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+
+import 'auth_controller.dart';
 
 class SellerProductService {
   final String baseUrl =
-      "http://hubbly-salma-unmaterialistically.ngrok-free.dev/api";
+      'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
+
+  AuthController get _auth => Get.find<AuthController>();
 
   /// ===========================================================
-  /// CREATE / POST PRODUK BARU + MULTIPLE IMAGES
+  /// CREATE PRODUCT (Multipart + Auth)
   /// ===========================================================
-  Future<bool> createProduct({
+  Future<Map<String, dynamic>> createProduct({
     required String name,
     required String description,
     required int price,
     required int stock,
-    required String folder, // onepiece / jjk
+    required String folder,
     required int tokoId,
     required List<File> images,
   }) async {
-    final url = Uri.parse("$baseUrl/products");
+    try {
+      // pastikan token sudah dimuat
+      await _auth.loadToken();
 
-    var request = http.MultipartRequest("POST", url);
+      if (_auth.token.value.isEmpty) {
+        return {
+          'success': false,
+          'message': 'Token tidak ditemukan. User belum login.',
+        };
+      }
 
-    // === kirim field text ===
-    request.fields["name"] = name;
-    request.fields["description"] = description;
-    request.fields["price"] = price.toString();
-    request.fields["stock"] = stock.toString();
+      final uri = Uri.parse('$baseUrl/products');
+      final request = http.MultipartRequest('POST', uri);
 
-    request.fields["image_type"] = "square";
-    request.fields["aspect_ratio"] = "1:1";
-    request.fields["folder"] = folder;
+      // ================= HEADERS =================
+      request.headers.addAll({
+        'Authorization': 'Bearer ${_auth.token.value}',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      });
 
-    request.fields["toko_id"] = tokoId.toString();
+      // ================= FIELDS =================
+      request.fields.addAll({
+        'name': name,
+        'description': description,
+        'price': price.toString(),
+        'stock': stock.toString(),
+        'folder': folder,
+        'toko_id': tokoId.toString(),
+        'image_type': 'square',
+        'aspect_ratio': '1:1',
+        'image_key': name.replaceAll(' ', '-'),
+      });
 
-    // === rename & upload multiple images ===
-    for (int i = 0; i < images.length; i++) {
-      String renamed =
-          "${name.replaceAll(" ", "-")}-${(i + 1).toString().padLeft(2, '0')}.jpg";
+      // ================= IMAGES =================
+      for (int i = 0; i < images.length; i++) {
+        final file = images[i];
+        final filename =
+            '${name.replaceAll(' ', '-')}-${(i + 1).toString().padLeft(2, '0')}.jpg';
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          "images[]", // laravel must receive as array
-          images[i].path,
-          filename: renamed,
-        ),
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'images[]',
+            file.path,
+            filename: filename,
+          ),
+        );
+      }
+
+      // ================= SEND =================
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 25),
       );
 
-      // kirim nama dasar (tanpa -01.jpg)
-      if (i == 0) {
-        request.fields["image_key"] = name.replaceAll(
-          " ",
-          "-",
-        ); // contoh: Zoro-Nendoroid-limited
+      final body = await streamed.stream.bytesToString();
+
+      if (streamed.statusCode == 201) {
+        return {'success': true};
       }
+
+      return {
+        'success': false,
+        'message': body.isNotEmpty ? body : 'Server error',
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
-
-    final response = await request.send();
-
-    return response.statusCode == 201;
   }
 
   /// ===========================================================
-  /// GET produk by toko_id
+  /// GET PRODUCTS BY TOKO
   /// ===========================================================
   Future<List<dynamic>> getProductsByToko(int tokoId) async {
-    final response = await http.get(Uri.parse("$baseUrl/products"));
+    try {
+      await _auth.loadToken();
 
-    if (response.statusCode == 200) {
+      final response = await http.get(
+        Uri.parse('$baseUrl/products'),
+        headers: {
+          'Authorization': 'Bearer ${_auth.token.value}',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) return [];
+
       final List<dynamic> products = json.decode(response.body);
-      return products.where((p) => p["toko_id"] == tokoId).toList();
+      return products.where((p) => p['toko_id'] == tokoId).toList();
+    } catch (_) {
+      return [];
     }
-    return [];
   }
 
-  // UPDATE PRODUCT
+  /// ===========================================================
+  /// UPDATE PRODUCT
+  /// ===========================================================
   Future<bool> updateProduct(int id, Map<String, dynamic> data) async {
-    final response = await http.put(
-      Uri.parse("$baseUrl/products/$id"),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(data),
-    );
+    try {
+      await _auth.loadToken();
 
-    return response.statusCode == 200;
+      final response = await http.put(
+        Uri.parse('$baseUrl/products/$id'),
+        headers: {
+          'Authorization': 'Bearer ${_auth.token.value}',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(data),
+      );
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 
-  // DELETE PRODUCT
+  /// ===========================================================
+  /// DELETE PRODUCT
+  /// ===========================================================
   Future<bool> deleteProduct(int id) async {
-    final response = await http.delete(Uri.parse("$baseUrl/products/$id"));
+    try {
+      await _auth.loadToken();
 
-    return response.statusCode == 200;
+      final response = await http.delete(
+        Uri.parse('$baseUrl/products/$id'),
+        headers: {
+          'Authorization': 'Bearer ${_auth.token.value}',
+          'Accept': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 }
