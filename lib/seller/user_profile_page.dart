@@ -12,6 +12,14 @@ class UserPage extends StatefulWidget {
 }
 
 class _UserPageState extends State<UserPage> {
+  Future<void> doLogout() async {
+    await AuthService.logout();
+
+    if (!mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+  }
+
   Map<String, dynamic>? user;
   bool loading = true;
 
@@ -133,6 +141,31 @@ class _UserPageState extends State<UserPage> {
                 menuButton("Belum ada toko", () {}),
                 menuButton("Order History", () {}),
                 menuButton("Whistlist", () {}),
+                menuButton("Logout", () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text("Logout"),
+                      content: const Text("Apakah kamu yakin ingin logout?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Batal"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            doLogout();
+                          },
+                          child: const Text(
+                            "Logout",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
 
                 const SizedBox(height: 30),
 
