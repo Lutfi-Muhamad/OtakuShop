@@ -13,10 +13,15 @@ class UserPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      // ⬅️ BELUM LOGIN → LANGSUNG KE LOGIN PAGE
       print("👤 USER PAGE | tokoId = ${auth.user.value?.tokoId}");
-      final user = auth.user.value;
 
+      final user = auth.user.value;
       if (user == null) {
+        Future.microtask(() {
+          Get.offAllNamed('/login');
+        });
+
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
 

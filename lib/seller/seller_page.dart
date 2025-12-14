@@ -19,42 +19,57 @@ class _SellerPageState extends State<SellerPage> {
   final SellerProductService productService = SellerProductService();
 
   List<dynamic> myProducts = [];
-  bool loading = true;
+  bool loading = false;
   int? lastFetchedTokoId;
 
+  @override
   @override
   void initState() {
     super.initState();
 
-    // LISTEN PERUBAHAN USER
+    // 🔥 FETCH PERTAMA KALI
+    final tokoId = auth.user.value?.tokoId;
+    print("🚀 INIT SELLER | tokoId = $tokoId");
+
+    if (tokoId != null) {
+      lastFetchedTokoId = tokoId;
+      fetchProducts(tokoId);
+    }
+
+    // 🔁 LISTEN JIKA USER BERUBAH
     ever(auth.user, (_) {
-      final tokoId = auth.user.value?.tokoId;
+      final newTokoId = auth.user.value?.tokoId;
+      print("🔁 SELLER ever() tokoId = $newTokoId");
 
-      print("🔁 SELLER ever() tokoId = $tokoId");
-
-      if (tokoId != null && tokoId != lastFetchedTokoId) {
-        lastFetchedTokoId = tokoId;
-        fetchProducts(tokoId);
+      if (newTokoId != null && newTokoId != lastFetchedTokoId) {
+        lastFetchedTokoId = newTokoId;
+        fetchProducts(newTokoId);
       }
     });
   }
 
   Future<void> fetchProducts(int tokoId) async {
-    print("📦 FETCH PRODUCTS tokoId = $tokoId");
+    print("📦 FETCH PRODUCTS START | tokoId = $tokoId");
 
     setState(() => loading = true);
 
     try {
       final products = await productService.getProductsByToko(tokoId);
+
       if (!mounted) return;
 
       setState(() {
         myProducts = products;
-        loading = false;
       });
+
+      print("📦 FETCH SUCCESS | total = ${products.length}");
     } catch (e) {
-      if (!mounted) return;
-      setState(() => loading = false);
+      print("❌ FETCH ERROR: $e");
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+      print("📦 FETCH END | loading = false");
     }
   }
 

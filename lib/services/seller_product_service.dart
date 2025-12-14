@@ -101,18 +101,27 @@ class SellerProductService {
       await _auth.loadToken();
 
       final response = await http.get(
-        Uri.parse('$baseUrl/products'),
+        Uri.parse('$baseUrl/store/$tokoId/products'),
         headers: {
           'Authorization': 'Bearer ${_auth.token.value}',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
       );
 
+      print("📦 STATUS = ${response.statusCode}");
+      print("📦 BODY = ${response.body}");
+
       if (response.statusCode != 200) return [];
 
-      final List<dynamic> products = json.decode(response.body);
-      return products.where((p) => p['toko_id'] == tokoId).toList();
-    } catch (_) {
+      final decoded = json.decode(response.body);
+      final List<dynamic> products = decoded['products'];
+
+      print("📦 TOTAL PRODUCTS = ${products.length}");
+
+      return products;
+    } catch (e) {
+      print("❌ ERROR FETCH PRODUCTS: $e");
       return [];
     }
   }
