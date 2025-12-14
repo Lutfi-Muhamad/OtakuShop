@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
-
+import 'package:otakushop/models/user.dart';
 
 class ProfileEditPage extends StatefulWidget {
-  final Map<String, dynamic> userData;
-  const ProfileEditPage({super.key, required this.userData});
+  final User user;
+  const ProfileEditPage({super.key, required this.user});
 
   @override
   State<ProfileEditPage> createState() => _ProfileEditPageState();
@@ -22,9 +22,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   @override
   void initState() {
     super.initState();
-    nameC = TextEditingController(text: widget.userData["name"]);
-    bioC = TextEditingController(text: widget.userData["bio"]);
-    addressC = TextEditingController(text: widget.userData["address"]);
+    nameC = TextEditingController(text: widget.user.name);
+    bioC = TextEditingController(text: widget.user.bio);
+    addressC = TextEditingController(text: widget.user.address);
   }
 
   Future pickPhoto() async {
@@ -73,10 +73,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 radius: 50,
                 backgroundImage: photoFile != null
                     ? FileImage(photoFile!)
-                    : (widget.userData["photo"] != null
-                          ? NetworkImage(widget.userData["photo"])
+                    : (widget.user.photo != null
+                          ? NetworkImage(widget.user.photo!)
                           : null),
-                child: (photoFile == null && widget.userData["photo"] == null)
+
+                child: ((photoFile == null && widget.user.photo == null))
                     ? const Icon(Icons.person, size: 50)
                     : null,
               ),

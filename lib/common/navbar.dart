@@ -58,7 +58,7 @@ class PinkNavbar extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const UserPage(),
+                        builder: (_) => UserPage(),
                       ),
                     );
                   },

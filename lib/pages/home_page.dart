@@ -7,6 +7,7 @@ import 'package:otakushop/pages/promo_page.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 

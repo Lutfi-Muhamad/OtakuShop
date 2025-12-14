@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:get/get.dart';
+import '../services/auth_controller.dart';
 import 'login_page.dart'; // pastikan file ini ada
 
 class RegisterPage extends StatefulWidget {
@@ -17,21 +18,30 @@ class _RegisterPageState extends State<RegisterPage> {
   bool loading = false;
 
   void doRegister() async {
+    if (name.text.isEmpty || email.text.isEmpty || password.text.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Semua field harus diisi")));
+      return;
+    }
+
     setState(() => loading = true);
 
-    final success = await AuthService.register(
-      name.text,
-      email.text,
-      password.text,
-    );
+    // Gunakan instance controller, bukan static
+    final auth = Get.find<AuthController>();
+    final success = await auth.register(name.text, email.text, password.text);
 
     setState(() => loading = false);
 
     if (success) {
+      // Refresh user atau langsung ke login
+      await auth.refreshUser();
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("🎉 Register Berhasil!")));
-      Navigator.pop(context);
+
+      Get.offAllNamed('/login'); // langsung ke halaman login
     } else {
       ScaffoldMessenger.of(
         context,

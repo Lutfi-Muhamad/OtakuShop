@@ -1,19 +1,32 @@
+import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:otakushop/models/user.dart';
 
 class AuthController extends GetxController {
+  // ================= STATE =================
   final token = ''.obs;
-  final userName = ''.obs;
+  final user = Rxn<User>();
 
   static const String baseUrl =
       'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
 
+  // ================= LIFECYCLE =================
+  @override
+  void onInit() {
+    super.onInit();
+    refreshUser(); // ⬅️ INI KUNCI UTAMA
+  }
+
+  // ================= HELPER =================
   String api(String path) => '$baseUrl$path';
 
   Map<String, String> headers({bool json = true}) {
-    final h = <String, String>{'Accept': 'application/json'};
+    final h = <String, String>{
+      'Accept': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    };
 
     if (json) {
       h['Content-Type'] = 'application/json; charset=UTF-8';
@@ -23,12 +36,10 @@ class AuthController extends GetxController {
       h['Authorization'] = 'Bearer ${token.value}';
     }
 
-    // ngrok noise suppressor
-    h['ngrok-skip-browser-warning'] = 'true';
-
     return h;
   }
 
+  // ================= TOKEN =================
   Future<void> saveToken(String t) async {
     token.value = t;
     final prefs = await SharedPreferences.getInstance();
@@ -37,34 +48,116 @@ class AuthController extends GetxController {
 
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final stored =
-        prefs.getString('auth_token') ?? prefs.getString('token') ?? '';
-    if (stored.isNotEmpty) token.value = stored;
+    token.value = prefs.getString('auth_token') ?? '';
   }
 
+  // ================= FETCH USER =================
+  Future<void> refreshUser() async {
+    print('========== REFRESH USER START ==========');
+
+    await loadToken();
+    print('[DEBUG] token setelah load: "${token.value}"');
+
+    if (token.value.isEmpty) {
+      print('[DEBUG] token kosong → user = null');
+      user.value = null;
+      return;
+    }
+
+    final uri = Uri.parse(api('/user'));
+    print('[DEBUG] GET $uri');
+
+    final res = await http.get(uri, headers: headers(json: false));
+
+    print('[DEBUG] status code: ${res.statusCode}');
+    print('[DEBUG] raw body: ${res.body}');
+
+    if (res.statusCode == 200) {
+      final decoded = jsonDecode(res.body);
+      print('[DEBUG] decoded json: $decoded');
+
+      final userJson = decoded['user'];
+      print('[DEBUG] user json: $userJson');
+
+      user.value = User.fromJson(userJson);
+      print('[DEBUG] user parsed: ${user.value}');
+    } else {
+      print('[DEBUG] request gagal');
+      user.value = null;
+    }
+
+    print('========== REFRESH USER END ==========');
+  }
+
+  // ================= REGISTER =================
+  Future<bool> register(String name, String email, String password) async {
+    try {
+      final res = await http.post(
+        Uri.parse(api('/register')),
+        headers: headers(),
+        body: jsonEncode({"name": name, "email": email, "password": password}),
+      );
+
+      if (res.statusCode != 200) return false;
+
+      final data = jsonDecode(res.body);
+      final tokenFromBackend = data['token'];
+      if (tokenFromBackend == null) return false;
+
+      await saveToken(tokenFromBackend);
+      await refreshUser();
+      return true;
+    } catch (e) {
+      print('[REGISTER] error: $e');
+      return false;
+    }
+  }
+
+  // ================= LOGIN =================
+  Future<bool> login(String email, String password) async {
+    try {
+      final res = await http.post(
+        Uri.parse(api('/login')),
+        headers: headers(),
+        body: jsonEncode({"email": email, "password": password}),
+      );
+
+      print('[LOGIN] status: ${res.statusCode}');
+      print('[LOGIN] body: ${res.body}');
+
+      if (res.statusCode != 200) return false;
+
+      final data = jsonDecode(res.body);
+      final tokenFromBackend = data['token'];
+      if (tokenFromBackend == null) return false;
+
+      await saveToken(tokenFromBackend);
+      await refreshUser();
+      return true;
+    } catch (e) {
+      print('[LOGIN] error: $e');
+      return false;
+    }
+  }
+
+  // ================= LOGOUT =================
   Future<bool> logout() async {
     try {
-      await loadToken(); // JANGAN ASUMSI TOKEN SUDAH ADA
+      final res = await http.post(
+        Uri.parse(api('/logout')),
+        headers: headers(json: false),
+      );
 
-      final uri = Uri.parse(api('/logout')); // FIX DI SINI
-      final response = await http.post(uri, headers: headers(json: false));
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
+      if (res.statusCode == 200 || res.statusCode == 204) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('auth_token');
         token.value = '';
-        userName.value = '';
+        user.value = null;
         return true;
       }
-
-      print(
-        '[AuthController] logout failed '
-        '${response.statusCode}: ${response.body}',
-      );
       return false;
-    } catch (e, stack) {
-      print('[AuthController] logout exception: $e');
-      print(stack);
+    } catch (e) {
+      print('[LOGOUT] error: $e');
       return false;
     }
   }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:otakushop/seller/seller_register_page.dart';
 import 'package:otakushop/services/seller_product_service.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/seller/edit_seller_page.dart';
 import 'package:otakushop/pages/home_page.dart';
 import 'package:otakushop/seller/seller_profile_page.dart';
 import 'add_product_page.dart';
+import 'package:get/get.dart';
 
 class SellerPage extends StatefulWidget {
   const SellerPage({super.key});
@@ -18,8 +21,6 @@ class _SellerPageState extends State<SellerPage> {
   List<dynamic> myProducts = [];
   bool loading = true;
 
-  int yourTokoId = 1; // Ubah sesuai data sesi seller
-
   @override
   void initState() {
     super.initState();
@@ -27,14 +28,25 @@ class _SellerPageState extends State<SellerPage> {
   }
 
   void fetchProducts() async {
+    final auth = Get.find<AuthController>();
+
+    final tokoId = auth.user.value?.tokoId;
+
+    if (tokoId == null) {
+      Get.offAll(() => const SellerRegisterPage());
+      return;
+    }
+
     try {
-      final products = await productService.getProductsByToko(yourTokoId);
+      final products = await productService.getProductsByToko(tokoId);
+      if (!mounted) return;
 
       setState(() {
         myProducts = products;
         loading = false;
       });
-    } catch (e) {
+    } catch (_) {
+      if (!mounted) return;
       setState(() => loading = false);
     }
   }

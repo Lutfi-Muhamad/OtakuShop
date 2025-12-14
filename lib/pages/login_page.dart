@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/services/auth_service.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'register_page.dart';
+import 'package:get/get.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,7 +18,8 @@ class _LoginPageState extends State<LoginPage> {
   void doLogin() async {
     setState(() => loading = true);
 
-    final success = await AuthService.login(email.text, password.text);
+    final auth = Get.find<AuthController>();
+    final success = await auth.login(email.text.trim(), password.text.trim());
 
     setState(() => loading = false);
 
@@ -25,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("✅ Login Berhasil")));
-      Navigator.pushReplacementNamed(context, '/');
+      Get.offAllNamed('/');
     } else {
       ScaffoldMessenger.of(
         context,

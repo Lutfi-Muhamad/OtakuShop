@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:otakushop/pages/home_page.dart';
-import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/pages/login_page.dart';
 import 'package:otakushop/seller/user_profile_page.dart';
-import 'package:get/get.dart';
-
+import 'package:otakushop/services/auth_controller.dart';
 
 void main() {
-  runApp(const MyApp());
+  // inject controller SEKALI sebelum app jalan
   Get.put(AuthController(), permanent: true);
+
   runApp(const MyApp());
 }
 
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Anime Store',
       theme: ThemeData(
@@ -28,11 +28,11 @@ class MyApp extends StatelessWidget {
       // entry point aplikasi
       initialRoute: '/',
 
-      routes: {
-        '/': (context) => const HomePage(),
-        '/login': (context) => const LoginPage(),
-        '/profile': (context) => const UserPage(),
-      },
+      getPages: [
+        GetPage(name: '/', page: () => const HomePage()),
+        GetPage(name: '/login', page: () => const LoginPage()),
+        GetPage(name: '/profile', page: () => UserPage()),
+      ],
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/store_service.dart';
+import '../services/auth_controller.dart';
+import 'package:get/get.dart';
+import 'seller_page.dart';
 
 class SellerRegisterPage extends StatefulWidget {
   const SellerRegisterPage({super.key});
@@ -47,10 +50,12 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
       if (result["success"] == true) {
         print("REGISTER STORE SUCCESS");
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Toko berhasil didaftarkan!")),
-        );
-        Navigator.pop(context);
+        // 1. Refresh auth state (INI KUNCI)
+        await Get.find<AuthController>().refreshUser();
+
+        // 2. Pindah ke SellerPage
+        Get.offAll(() => const SellerPage());
+
         return;
       }
 

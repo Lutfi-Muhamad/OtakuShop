@@ -1,235 +1,190 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/seller/seller_page.dart';
 import 'package:otakushop/seller/seller_register_page.dart';
-import '../services/auth_service.dart';
 import '../pages/profile_edit_page.dart';
 
-class UserPage extends StatefulWidget {
-  const UserPage({super.key});
+class UserPage extends StatelessWidget {
+  UserPage({super.key});
 
-  @override
-  State<UserPage> createState() => _UserPageState();
-}
-
-class _UserPageState extends State<UserPage> {
-  Future<void> doLogout() async {
-    await AuthService.logout();
-
-    if (!mounted) return;
-
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-  }
-
-  Map<String, dynamic>? user;
-  bool loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
-
-  Future<void> _init() async {
-    try {
-      final u = await AuthService.fetchUser();
-      if (!mounted) return;
-
-      setState(() {
-        user = u["user"];
-        loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-    }
-  }
+  final AuthController auth = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    return Obx(() {
+      print('🔥 USER PAGE BUILD → user = ${auth.user.value}');
+      final user = auth.user.value;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF57CA1),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ------------------------------ TOP BAR
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.white),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProfileEditPage(userData: user!),
-                          ),
-                        ).then((value) {
-                          _init(); // refresh profile setelah edit
-                        });
-                      },
-                    ),
-                  ],
-                ),
+      if (user == null) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
 
-                const SizedBox(height: 10),
-
-                // ------------------------------ GREETING
-                Text(
-                  "Hi! ${user?["name"] ?? "User"}",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                const Text(
-                  "Account Information",
-                  style: TextStyle(color: Colors.white, fontSize: 14),
-                ),
-
-                const SizedBox(height: 10),
-
-                // ------------------------------ ACCOUNT BOX
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
+      return Scaffold(
+        backgroundColor: const Color(0xFFF57CA1),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ---------------- TOP BAR
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundImage: user?["photo"] != null
-                            ? NetworkImage(user!["photo"])
-                            : null,
-                        child: user?["photo"] == null
-                            ? const Icon(Icons.person, size: 40)
-                            : null,
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        onPressed: () => Get.back(),
                       ),
-
-                      const SizedBox(height: 8),
-
-                      infoItem("Nama", user?["name"]),
-                      infoItem("Bio", user?["bio"] ?? "Belum ada bio"),
-                      infoItem(
-                        "Alamat",
-                        user?["address"] ?? "Belum ada alamat",
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.white),
+                        onPressed: () async {
+                          await Get.to(() => ProfileEditPage(user: user));
+                          await auth.refreshUser();
+                        },
                       ),
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
-                // ------------------------------ MENU LIST
-                menuButton("Belum ada toko", () {}),
-                menuButton("Order History", () {}),
-                menuButton("Whistlist", () {}),
-                menuButton("Logout", () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text("Logout"),
-                      content: const Text("Apakah kamu yakin ingin logout?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Batal"),
+                  // ---------------- GREETING
+                  Text(
+                    "Hi! ${user.name}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Account Information",
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // ---------------- ACCOUNT BOX
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: user.photo != null
+                              ? NetworkImage(user.photo!)
+                              : null,
+                          child: user.photo == null
+                              ? const Icon(Icons.person, size: 40)
+                              : null,
                         ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            doLogout();
-                          },
-                          child: const Text(
-                            "Logout",
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
+                        const SizedBox(height: 8),
+                        infoItem("Nama", user.name),
+                        infoItem("Bio", user.bio ?? "Belum ada bio"),
+                        infoItem("Alamat", user.address ?? "Belum ada alamat"),
                       ],
                     ),
-                  );
-                }),
+                  ),
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 20),
 
-                // ------------------------------ SELLER BUTTON
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.pink,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 40,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: Colors.pink, width: 2),
-                      ),
-                      elevation: 4,
-                    ),
-
-                    onPressed: () {
-                      if (user?["store_id"] == null) {
-                        // BELUM PUNYA TOKO → Daftar
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SellerRegisterPage(),
-                          ),
-                        );
+                  // ---------------- MENU
+                  menuButton(
+                    user.tokoId == null ? "Belum ada toko" : "Toko saya",
+                    () async {
+                      await auth.refreshUser();
+                      if (auth.user.value?.tokoId == null) {
+                        Get.to(() => const SellerRegisterPage());
                       } else {
-                        // SUDAH PUNYA TOKO → Kelola
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => SellerPage(),
-                          ), // Pastikan sudah import
-                        );
+                        Get.to(() => const SellerPage());
                       }
                     },
+                  ),
+                  menuButton("Order History", () {}),
+                  menuButton("Wishlist", () {}),
+                  menuButton("Logout", () {
+                    Get.dialog(
+                      AlertDialog(
+                        title: const Text("Logout"),
+                        content: const Text("Apakah kamu yakin ingin logout?"),
+                        actions: [
+                          TextButton(
+                            onPressed: Get.back,
+                            child: const Text("Batal"),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              await auth.logout();
+                              Get.offAllNamed('/login');
+                            },
+                            child: const Text(
+                              "Logout",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
 
-                    child: Text(
-                      user?["store_id"] == null
-                          ? "DAFTAR\nSEBAGAI SELLER"
-                          : "KELOLA\nTOKO",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox(height: 30),
+
+                  // ---------------- SELLER BUTTON
+                  Center(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.pink,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                          horizontal: 40,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.pink, width: 2),
+                        ),
+                      ),
+                      onPressed: () async {
+                        await auth.refreshUser();
+
+                        if (auth.user.value?.tokoId == null) {
+                          Get.to(() => const SellerRegisterPage());
+                        } else {
+                          Get.to(() => const SellerPage());
+                        }
+                      },
+                      child: Text(
+                        user.tokoId == null
+                            ? "DAFTAR\nSEBAGAI SELLER"
+                            : "KELOLA\nTOKO",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  // ==========================================
-  // WIDGET BUILDER (TARUH DI LUAR BUILD)
-  // ==========================================
-  Widget infoItem(String title, String? value) {
+  // ================= WIDGET HELPERS =================
+
+  Widget infoItem(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -239,7 +194,7 @@ class _UserPageState extends State<UserPage> {
             title,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
-          Text(value ?? "-", style: const TextStyle(fontSize: 14)),
+          Text(value, style: const TextStyle(fontSize: 14)),
         ],
       ),
     );
