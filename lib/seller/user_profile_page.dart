@@ -13,7 +13,7 @@ class UserPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      print('🔥 USER PAGE BUILD → user = ${auth.user.value}');
+      print("👤 USER PAGE | tokoId = ${auth.user.value?.tokoId}");
       final user = auth.user.value;
 
       if (user == null) {
@@ -153,9 +153,12 @@ class UserPage extends StatelessWidget {
                         ),
                       ),
                       onPressed: () async {
-                        await auth.refreshUser();
+                        await auth.refreshUser(); // ⬅️ TUNGGU SAMPAI SELESAI
 
-                        if (auth.user.value?.tokoId == null) {
+                        final tokoId = auth.user.value?.tokoId;
+                        print("➡️ NAVIGATE TO SELLER | tokoId = $tokoId");
+
+                        if (tokoId == null) {
                           Get.to(() => const SellerRegisterPage());
                         } else {
                           Get.to(() => const SellerPage());

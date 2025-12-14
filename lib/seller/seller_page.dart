@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/seller/seller_register_page.dart';
 import 'package:otakushop/services/seller_product_service.dart';
 import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/seller/edit_seller_page.dart';
@@ -16,26 +15,34 @@ class SellerPage extends StatefulWidget {
 }
 
 class _SellerPageState extends State<SellerPage> {
+  final AuthController auth = Get.find<AuthController>();
   final SellerProductService productService = SellerProductService();
 
   List<dynamic> myProducts = [];
   bool loading = true;
+  int? lastFetchedTokoId;
 
   @override
   void initState() {
     super.initState();
-    fetchProducts();
+
+    // LISTEN PERUBAHAN USER
+    ever(auth.user, (_) {
+      final tokoId = auth.user.value?.tokoId;
+
+      print("🔁 SELLER ever() tokoId = $tokoId");
+
+      if (tokoId != null && tokoId != lastFetchedTokoId) {
+        lastFetchedTokoId = tokoId;
+        fetchProducts(tokoId);
+      }
+    });
   }
 
-  void fetchProducts() async {
-    final auth = Get.find<AuthController>();
+  Future<void> fetchProducts(int tokoId) async {
+    print("📦 FETCH PRODUCTS tokoId = $tokoId");
 
-    final tokoId = auth.user.value?.tokoId;
-
-    if (tokoId == null) {
-      Get.offAll(() => const SellerRegisterPage());
-      return;
-    }
+    setState(() => loading = true);
 
     try {
       final products = await productService.getProductsByToko(tokoId);
@@ -45,7 +52,7 @@ class _SellerPageState extends State<SellerPage> {
         myProducts = products;
         loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => loading = false);
     }
@@ -56,151 +63,184 @@ class _SellerPageState extends State<SellerPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TOP NAVBAR
-              Container(
-                height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                color: Colors.pinkAccent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Icon(Icons.menu, color: Colors.black, size: 30),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ProfilePage(),
-                          ),
-                        );
-                      },
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.black,
-                        size: 30,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        child: Obx(() {
+          final tokoId = auth.user.value?.tokoId;
 
-              const SizedBox(height: 10),
+          print("🛒 SELLER BUILD | tokoId = $tokoId");
 
-              // BACK + SEARCH
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HomePage()),
-                        );
-                      },
-                      child: const Icon(Icons.arrow_back, size: 28),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Search...',
-                                  border: InputBorder.none,
-                                ),
-                              ),
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ================= TOP NAVBAR =================
+                Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  color: Colors.pinkAccent,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.menu, color: Colors.black, size: 30),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProfilePage(),
                             ),
-                            CircleAvatar(
-                              radius: 15,
-                              backgroundColor: Colors.pinkAccent,
-                              child: const Icon(
-                                Icons.search,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                          ],
+                          );
+                        },
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.black,
+                          size: 30,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              const Center(
-                child: Text(
-                  "My Products",
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // LOADING
-              if (loading)
-                const Center(
-                  child: CircularProgressIndicator(color: Colors.pinkAccent),
-                ),
-
-              // JIKA PRODUK KOSONG
-              if (!loading && myProducts.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: Text(
-                      "Kamu belum memiliki barang yang bisa dijual",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
 
-              // GRID PRODUK
-              if (!loading && myProducts.isNotEmpty)
+                const SizedBox(height: 10),
+
+                // ================= BACK + SEARCH =================
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GridView.count(
-                    shrinkWrap: true,
-                    crossAxisCount: 2,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.68,
-                    children: List.generate(myProducts.length, (i) {
-                      final p = myProducts[i];
-                      return productCard(
-                        context,
-                        p["name"] ?? "",
-                        "IDR ${p['price']}",
-                        p["images"] != null && p["images"].isNotEmpty
-                            ? p["images"][0]
-                            : "https://via.placeholder.com/150",
-                      );
-                    }),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const HomePage()),
+                          );
+                        },
+                        child: const Icon(Icons.arrow_back, size: 28),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Search...',
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                              CircleAvatar(
+                                radius: 15,
+                                backgroundColor: Colors.pinkAccent,
+                                child: const Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-        ),
+
+                const SizedBox(height: 20),
+
+                const Center(
+                  child: Text(
+                    "My Products",
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ================= STATE HANDLING =================
+
+                // LOADING
+                if (loading)
+                  const Center(
+                    child: CircularProgressIndicator(color: Colors.pinkAccent),
+                  ),
+
+                // BELUM PUNYA TOKO
+                if (!loading && tokoId == null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: Column(
+                        children: [
+                          const Text(
+                            "Kamu belum terdaftar sebagai seller",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "toko_id kamu = $tokoId",
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // TOKO ADA, PRODUK KOSONG
+                if (!loading && tokoId != null && myProducts.isEmpty)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 40),
+                      child: Text(
+                        "Belum ada barang yang dijual",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // GRID PRODUK
+                if (!loading && myProducts.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.68,
+                      children: List.generate(myProducts.length, (i) {
+                        final p = myProducts[i];
+                        return productCard(
+                          context,
+                          p["name"] ?? "",
+                          "IDR ${p['price']}",
+                          p["images"] != null && p["images"].isNotEmpty
+                              ? p["images"][0]
+                              : "https://via.placeholder.com/150",
+                        );
+                      }),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }),
       ),
 
+      // ================= FAB =================
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.pinkAccent,
         shape: const CircleBorder(),

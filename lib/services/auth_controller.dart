@@ -16,7 +16,6 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    refreshUser(); // ⬅️ INI KUNCI UTAMA
   }
 
   // ================= HELPER =================
@@ -55,9 +54,6 @@ class AuthController extends GetxController {
   Future<void> refreshUser() async {
     print('========== REFRESH USER START ==========');
 
-    await loadToken();
-    print('[DEBUG] token setelah load: "${token.value}"');
-
     if (token.value.isEmpty) {
       print('[DEBUG] token kosong → user = null');
       user.value = null;
@@ -65,24 +61,14 @@ class AuthController extends GetxController {
     }
 
     final uri = Uri.parse(api('/user'));
-    print('[DEBUG] GET $uri');
-
     final res = await http.get(uri, headers: headers(json: false));
-
-    print('[DEBUG] status code: ${res.statusCode}');
-    print('[DEBUG] raw body: ${res.body}');
 
     if (res.statusCode == 200) {
       final decoded = jsonDecode(res.body);
-      print('[DEBUG] decoded json: $decoded');
+      user.value = User.fromJson(decoded['user']);
 
-      final userJson = decoded['user'];
-      print('[DEBUG] user json: $userJson');
-
-      user.value = User.fromJson(userJson);
-      print('[DEBUG] user parsed: ${user.value}');
+      print('[DEBUG] tokoId = ${user.value?.tokoId}');
     } else {
-      print('[DEBUG] request gagal');
       user.value = null;
     }
 

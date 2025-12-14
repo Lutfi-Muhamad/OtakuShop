@@ -5,9 +5,14 @@ import 'package:otakushop/pages/login_page.dart';
 import 'package:otakushop/seller/user_profile_page.dart';
 import 'package:otakushop/services/auth_controller.dart';
 
-void main() {
-  // inject controller SEKALI sebelum app jalan
-  Get.put(AuthController(), permanent: true);
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final auth = Get.put(AuthController(), permanent: true);
+
+  // ⬇️ LOAD TOKEN & USER SEBELUM APP JALAN
+  await auth.loadToken();
+  await auth.refreshUser();
 
   runApp(const MyApp());
 }
@@ -25,7 +30,6 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // entry point aplikasi
       initialRoute: '/',
 
       getPages: [
