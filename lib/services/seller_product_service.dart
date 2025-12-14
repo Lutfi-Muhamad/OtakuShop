@@ -68,7 +68,7 @@ class SellerProductService {
 
         request.files.add(
           await http.MultipartFile.fromPath(
-            'images', // pastikan pakai 'images' saja
+            'images[]', // <- PENTING
             file.path,
             filename: filename,
           ),
