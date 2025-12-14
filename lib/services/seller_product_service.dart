@@ -64,14 +64,18 @@ class SellerProductService {
         final filename =
             '${name.replaceAll(' ', '-')}-${(i + 1).toString().padLeft(2, '0')}.jpg';
 
+        print("📤 UPLOAD FILE: ${file.path} as $filename");
+
         request.files.add(
           await http.MultipartFile.fromPath(
-            'images[]',
+            'images', // pastikan pakai 'images' saja
             file.path,
             filename: filename,
           ),
         );
       }
+
+      print("📤 TOTAL FILES: ${request.files.length}");
 
       // ================= SEND =================
       final streamed = await request.send().timeout(

@@ -275,22 +275,41 @@ class _SellerPageState extends State<SellerPage> {
   // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
   Widget productCard(
-    BuildContext context,
-    String title,
-    String price,
-    String imgUrl,
-  ) {
-    return Column(
+  BuildContext context,
+  String title,
+  String price,
+  String imgUrl,
+) {
+  return SizedBox(
+    height: 260, // ⬅️ WAJIB: constraint untuk GridView
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // ================= IMAGE =================
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.network(imgUrl, height: 120, fit: BoxFit.cover),
+          child: Image.network(
+            imgUrl,
+            height: 120,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 120,
+                color: Colors.grey.shade300,
+                child: const Icon(Icons.image_not_supported),
+              );
+            },
+          ),
         ),
+
         const SizedBox(height: 6),
 
+        // ================= ACTION ROW =================
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // BADGE
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -305,6 +324,7 @@ class _SellerPageState extends State<SellerPage> {
 
             const SizedBox(width: 6),
 
+            // EDIT
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -317,6 +337,7 @@ class _SellerPageState extends State<SellerPage> {
 
             const SizedBox(width: 8),
 
+            // DELETE
             GestureDetector(
               onTap: () {
                 showDialog(
@@ -338,9 +359,8 @@ class _SellerPageState extends State<SellerPage> {
                               child: GestureDetector(
                                 onTap: () => Navigator.pop(context),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                   color: Colors.green,
                                   child: const Center(
                                     child: Text(
@@ -355,13 +375,12 @@ class _SellerPageState extends State<SellerPage> {
                             Expanded(
                               child: GestureDetector(
                                 onTap: () {
-                                  // TODO: Tambahkan delete jika sudah ada endpoint
                                   Navigator.pop(context);
+                                  // delete logic nanti
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                   color: Colors.red,
                                   child: const Center(
                                     child: Text(
@@ -386,14 +405,21 @@ class _SellerPageState extends State<SellerPage> {
 
         const SizedBox(height: 6),
 
+        // ================= TITLE =================
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
         ),
 
         const SizedBox(height: 6),
 
+        // ================= PRICE =================
         Text(
           price,
           style: const TextStyle(
@@ -403,6 +429,7 @@ class _SellerPageState extends State<SellerPage> {
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
