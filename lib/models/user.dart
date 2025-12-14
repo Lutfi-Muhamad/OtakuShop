@@ -3,7 +3,7 @@ class User {
   final String name;
   final String? bio;
   final String? address;
-  final String? photo;
+  String? photo;
   final int? tokoId;
 
   User({

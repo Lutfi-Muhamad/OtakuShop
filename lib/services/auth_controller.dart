@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:otakushop/models/user.dart';
+import 'dart:io';
 
 class AuthController extends GetxController {
   // ================= STATE =================
@@ -65,7 +66,7 @@ class AuthController extends GetxController {
 
     if (res.statusCode == 200) {
       final decoded = jsonDecode(res.body);
-      user.value = User.fromJson(decoded['user']);
+      user.value = User.fromJson(decoded['user']); // photo sudah URL ✅
 
       print('[DEBUG] tokoId = ${user.value?.tokoId}');
     } else {
@@ -122,6 +123,54 @@ class AuthController extends GetxController {
       return true;
     } catch (e) {
       print('[LOGIN] error: $e');
+      return false;
+    }
+  }
+
+  /// ================= UPDATE PROFILE DENGAN FOTO =================
+  Future<bool> updateProfile({
+    required String name,
+    required String bio,
+    required String address,
+    File? photoFile,
+  }) async {
+    try {
+      await loadToken();
+      if (token.value.isEmpty) return false;
+
+      final uri = Uri.parse(api('/user/update')); // pastikan endpoint
+      final request = http.MultipartRequest('POST', uri);
+
+      request.headers.addAll({
+        'Authorization': 'Bearer ${token.value}',
+        'Accept': 'application/json',
+      });
+
+      // Fields
+      request.fields['name'] = name;
+      request.fields['bio'] = bio;
+      request.fields['address'] = address;
+
+      // File
+      if (photoFile != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('photo', photoFile.path),
+        );
+      }
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        user.value = User.fromJson(data['user']); // update local user
+        return true;
+      }
+
+      print('[UPDATE PROFILE] ERROR: ${response.body}');
+      return false;
+    } catch (e) {
+      print('[UPDATE PROFILE] EXCEPTION: $e');
       return false;
     }
   }

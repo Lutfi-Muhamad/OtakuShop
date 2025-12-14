@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/auth_service.dart';
+import '../services/auth_controller.dart';
 import 'package:otakushop/models/user.dart';
+import 'package:get/get.dart';
 
 class ProfileEditPage extends StatefulWidget {
   final User user;
@@ -18,6 +19,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   late TextEditingController addressC;
 
   File? photoFile;
+  final AuthController _auth = Get.find<AuthController>();
 
   @override
   void initState() {
@@ -37,7 +39,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   Future saveProfile() async {
-    final ok = await AuthService.updateProfile(
+    final ok = await _auth.updateProfile(
       name: nameC.text,
       bio: bioC.text,
       address: addressC.text,
@@ -46,15 +48,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     if (!mounted) return;
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? "Profil berhasil diupdate" : "Gagal update profil"),
+      ),
+    );
+
     if (ok) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Profil berhasil diupdate")));
       Navigator.pop(context, true); // kembali + refresh
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Gagal update profil")));
     }
   }
 
@@ -66,7 +67,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // FOTO PROFIL
             GestureDetector(
               onTap: pickPhoto,
               child: CircleAvatar(
@@ -76,32 +76,27 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     : (widget.user.photo != null
                           ? NetworkImage(widget.user.photo!)
                           : null),
-
-                child: ((photoFile == null && widget.user.photo == null))
+                child: (photoFile == null && widget.user.photo == null)
                     ? const Icon(Icons.person, size: 50)
                     : null,
               ),
             ),
             const SizedBox(height: 20),
-
             TextField(
               controller: nameC,
               decoration: const InputDecoration(labelText: "Nama"),
             ),
             const SizedBox(height: 15),
-
             TextField(
               controller: bioC,
               decoration: const InputDecoration(labelText: "Bio"),
             ),
             const SizedBox(height: 15),
-
             TextField(
               controller: addressC,
               decoration: const InputDecoration(labelText: "Alamat"),
             ),
             const SizedBox(height: 25),
-
             ElevatedButton(onPressed: saveProfile, child: const Text("Simpan")),
           ],
         ),
