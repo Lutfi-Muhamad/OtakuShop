@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+
 import 'package:otakushop/common/drawer_widget.dart';
 import 'package:otakushop/common/footer.dart.dart';
 import 'package:otakushop/common/navbar.dart';
 import 'package:otakushop/common/searchbar.dart';
-import 'package:otakushop/pages/product_detail_page.dart';
+import 'package:otakushop/common/product_grid.dart';
 import 'package:otakushop/pages/promo_page.dart';
+
 import '../models/product.dart';
 import '../services/product_service.dart';
 
@@ -74,7 +76,7 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // GRID PRODUK (SQUARE)
-                    _buildProductGrid(context, squares),
+                    ProductGrid(products: squares),
 
                     const SizedBox(height: 30),
 
@@ -84,7 +86,7 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // LIST BAWAH
-                    _buildAnotherProductList(context, squares),
+                    ProductGrid(products: squares),
 
                     const SizedBox(height: 50),
                     _buildSeriesButton(),
@@ -157,114 +159,6 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // ==================== GRID PRODUK ====================
-  Widget _buildProductGrid(BuildContext context, List<Product> products) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: products.length,
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 20,
-        crossAxisSpacing: 20,
-        childAspectRatio: 0.65,
-      ),
-      itemBuilder: (context, i) {
-        return _productCard(context, products[i]);
-      },
-    );
-  }
-
-  Widget _productCard(BuildContext context, Product p) {
-    final hasImage = p.images.isNotEmpty;
-    final imageUrl = hasImage ? p.images.first : null;
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ProductDetailPage(product: p)),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 4,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ✅ GAMBAR AMAN
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-                image: hasImage
-                    ? DecorationImage(
-                        image: NetworkImage(imageUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                color: hasImage ? null : Colors.grey.shade200,
-              ),
-              child: !hasImage
-                  ? const Center(child: Icon(Icons.image_not_supported))
-                  : null,
-            ),
-
-            const SizedBox(height: 8),
-
-            // Badge
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.purple,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                "Limited",
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                p.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                p.price != null ? "IDR ${p.price}" : "—",
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ==================== TRENDING (WIDE) ====================
   Widget _buildTrending(Product p) {
     return Column(
@@ -300,24 +194,6 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  // ==================== LIST BAWAH ====================
-  Widget _buildAnotherProductList(
-    BuildContext context,
-    List<Product> products,
-  ) {
-    return Column(
-      children: products
-          .take(2)
-          .map(
-            (p) => Padding(
-              padding: const EdgeInsets.only(bottom: 20),
-              child: _productCard(context, p),
-            ),
-          )
-          .toList(),
     );
   }
 

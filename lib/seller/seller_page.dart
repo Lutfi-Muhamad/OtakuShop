@@ -91,7 +91,6 @@ class _SellerPageState extends State<SellerPage> {
               children: [
                 // ================= TOP NAVBAR =================
                 const PinkNavbar(),
-                
 
                 const SizedBox(height: 10),
 
@@ -176,6 +175,7 @@ class _SellerPageState extends State<SellerPage> {
                           p["images"] != null && p["images"].isNotEmpty
                               ? p["images"][0]
                               : "https://via.placeholder.com/150",
+                          p["id"],
                         );
                       }),
                     ),
@@ -210,6 +210,7 @@ class _SellerPageState extends State<SellerPage> {
     String title,
     String price,
     String imgUrl,
+    int productId,
   ) {
     return SizedBox(
       height: 260, // ⬅️ WAJIB: constraint untuk GridView
@@ -309,9 +310,41 @@ class _SellerPageState extends State<SellerPage> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () {
+                                  onTap: () async {
                                     Navigator.pop(context);
-                                    // delete logic nanti
+
+                                    debugPrint("🧨 DELETE CLICKED");
+                                    debugPrint("🧨 PRODUCT ID = $productId");
+                                    debugPrint(
+                                      "🧨 TOKEN = ${auth.token.value}",
+                                    );
+
+                                    try {
+                                      final result = await productService
+                                          .deleteProduct(
+                                            productId,
+                                            auth.token.value,
+                                          );
+
+                                      debugPrint("🧨 DELETE RESULT = $result");
+
+                                      setState(() {
+                                        myProducts.removeWhere(
+                                          (p) => p["id"] == productId,
+                                        );
+                                      });
+
+                                      debugPrint(
+                                        "🧨 LOCAL LIST UPDATED | sisa = ${myProducts.length}",
+                                      );
+                                    } catch (e) {
+                                      debugPrint("❌ DELETE ERROR = $e");
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(content: Text(e.toString())),
+                                      );
+                                    }
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+
 
 import 'auth_controller.dart';
 
@@ -156,21 +158,27 @@ class SellerProductService {
   /// ===========================================================
   /// DELETE PRODUCT
   /// ===========================================================
-  Future<bool> deleteProduct(int id) async {
-    try {
-      await _auth.loadToken();
+  Future<bool> deleteProduct(int productId, String token) async {
+    debugPrint("🌐 DELETE API CALL");
+    debugPrint("🌐 URL = $baseUrl/products/$productId");
+    debugPrint("🌐 TOKEN = $token");
 
-      final response = await http.delete(
-        Uri.parse('$baseUrl/products/$id'),
-        headers: {
-          'Authorization': 'Bearer ${_auth.token.value}',
-          'Accept': 'application/json',
-        },
-      );
+    final response = await http.delete(
+      Uri.parse('$baseUrl/products/$productId'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    );
 
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
+    debugPrint("🌐 STATUS = ${response.statusCode}");
+    debugPrint("🌐 BODY = ${response.body}");
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception(jsonDecode(response.body)['message'] ?? 'Delete failed');
     }
   }
 }
