@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:otakushop/common/drawer_widget.dart';
+import 'package:otakushop/common/navbar.dart';
+import 'package:otakushop/common/searchbar.dart';
 import 'package:otakushop/services/seller_product_service.dart';
 import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/seller/edit_seller_page.dart';
-import 'package:otakushop/pages/home_page.dart';
-import 'package:otakushop/seller/seller_profile_page.dart';
 import 'add_product_page.dart';
 import 'package:get/get.dart';
 
@@ -76,6 +77,7 @@ class _SellerPageState extends State<SellerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Obx(() {
@@ -88,84 +90,13 @@ class _SellerPageState extends State<SellerPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ================= TOP NAVBAR =================
-                Container(
-                  height: 60,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  color: Colors.pinkAccent,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Icon(Icons.menu, color: Colors.black, size: 30),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ProfilePage(),
-                            ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.black,
-                          size: 30,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const PinkNavbar(),
+                
 
                 const SizedBox(height: 10),
 
                 // ================= BACK + SEARCH =================
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const HomePage()),
-                          );
-                        },
-                        child: const Icon(Icons.arrow_back, size: 28),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 10),
-                              const Expanded(
-                                child: TextField(
-                                  decoration: InputDecoration(
-                                    hintText: 'Search...',
-                                    border: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                              CircleAvatar(
-                                radius: 15,
-                                backgroundColor: Colors.pinkAccent,
-                                child: const Icon(
-                                  Icons.search,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const SearchBarWidget(),
 
                 const SizedBox(height: 20),
 
@@ -275,161 +206,163 @@ class _SellerPageState extends State<SellerPage> {
   // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
   Widget productCard(
-  BuildContext context,
-  String title,
-  String price,
-  String imgUrl,
-) {
-  return SizedBox(
-    height: 260, // ⬅️ WAJIB: constraint untuk GridView
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // ================= IMAGE =================
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Image.network(
-            imgUrl,
-            height: 120,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 120,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.image_not_supported),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(height: 6),
-
-        // ================= ACTION ROW =================
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // BADGE
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.purple,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                "Limited",
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
-
-            const SizedBox(width: 6),
-
-            // EDIT
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => EditSellerPage()),
+    BuildContext context,
+    String title,
+    String price,
+    String imgUrl,
+  ) {
+    return SizedBox(
+      height: 260, // ⬅️ WAJIB: constraint untuk GridView
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ================= IMAGE =================
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.network(
+              imgUrl,
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 120,
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.image_not_supported),
                 );
               },
-              child: const Icon(Icons.edit, size: 18, color: Colors.blue),
             ),
+          ),
 
-            const SizedBox(width: 8),
+          const SizedBox(height: 6),
 
-            // DELETE
-            GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: Colors.white,
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          "Yakin ingin menghapus?\nTindakan ini tidak bisa dibatalkan",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => Navigator.pop(context),
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  color: Colors.green,
-                                  child: const Center(
-                                    child: Text(
-                                      "BATAL",
-                                      style: TextStyle(color: Colors.white),
+          // ================= ACTION ROW =================
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // BADGE
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.purple,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  "Limited",
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+
+              const SizedBox(width: 6),
+
+              // EDIT
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => EditSellerPage()),
+                  );
+                },
+                child: const Icon(Icons.edit, size: 18, color: Colors.blue),
+              ),
+
+              const SizedBox(width: 8),
+
+              // DELETE
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      backgroundColor: Colors.white,
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            "Yakin ingin menghapus?\nTindakan ini tidak bisa dibatalkan",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    color: Colors.green,
+                                    child: const Center(
+                                      child: Text(
+                                        "BATAL",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.pop(context);
-                                  // delete logic nanti
-                                },
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  color: Colors.red,
-                                  child: const Center(
-                                    child: Text(
-                                      "IYA",
-                                      style: TextStyle(color: Colors.white),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    // delete logic nanti
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    color: Colors.red,
+                                    child: const Center(
+                                      child: Text(
+                                        "IYA",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-              child: const Icon(Icons.delete, size: 18, color: Colors.red),
+                  );
+                },
+                child: const Icon(Icons.delete, size: 18, color: Colors.red),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          // ================= TITLE =================
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+
+          const SizedBox(height: 6),
+
+          // ================= PRICE =================
+          Text(
+            price,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
             ),
-          ],
-        ),
-
-        const SizedBox(height: 6),
-
-        // ================= TITLE =================
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
           ),
-        ),
-
-        const SizedBox(height: 6),
-
-        // ================= PRICE =================
-        Text(
-          price,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.red,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:otakushop/common/drawer_widget.dart';
 import 'package:otakushop/common/footer.dart.dart';
 import 'package:otakushop/common/navbar.dart';
 import 'package:otakushop/common/searchbar.dart';
@@ -7,22 +8,22 @@ import 'package:otakushop/pages/promo_page.dart';
 import '../models/product.dart';
 import '../services/product_service.dart';
 
-
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(), // ← WAJIB di Scaffold utama
       body: FutureBuilder<List<Product>>(
         future: ProductService.fetchProducts(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("Tidak ada"));
+            return const Center(child: Text("Tidak ada"));
           }
 
           final products = snapshot.data!;
@@ -33,21 +34,29 @@ class HomePage extends StatelessWidget {
 
           return CustomScrollView(
             slivers: [
+              // ================= SLIVER APP BAR =================
               SliverAppBar(
                 pinned: true,
-                backgroundColor: Color(0xFFF87DAF),
-                expandedHeight: 60,
-                flexibleSpace: const FlexibleSpaceBar(background: PinkNavbar()),
+                backgroundColor: Colors.pink,
+                toolbarHeight: 60,
+
+                // ❌ JANGAN FlexibleSpaceBar background
+                // ✅ TARUH NAVBAR DI title
+                title: const PinkNavbar(),
+
+                automaticallyImplyLeading: false,
               ),
+
+              // ================= CONTENT =================
               SliverToBoxAdapter(
                 child: Column(
                   children: [
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     const SearchBarWidget(),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                    // ✅ PROMO BANNER (KLIK KE PROMO PAGE)
+                    // PROMO BANNER
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -58,28 +67,28 @@ class HomePage extends StatelessWidget {
                       child: _buildBannerPromo(),
                     ),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     _buildCategories(),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     _buildFilters(),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                    // ✅ GRID PRODUK DARI API (SQUARE)
+                    // GRID PRODUK (SQUARE)
                     _buildProductGrid(context, squares),
 
-                    SizedBox(height: 30),
+                    const SizedBox(height: 30),
 
-                    // ✅ TRENDING DARI API (WIDE)
+                    // TRENDING (WIDE)
                     if (wides.isNotEmpty) _buildTrending(wides.first),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                    // ✅ LIST BAWAH JUGA DARI API
+                    // LIST BAWAH
                     _buildAnotherProductList(context, squares),
 
-                    SizedBox(height: 50),
+                    const SizedBox(height: 50),
                     _buildSeriesButton(),
-                    SizedBox(height: 50),
+                    const SizedBox(height: 50),
                     const FooterWidget(),
                   ],
                 ),

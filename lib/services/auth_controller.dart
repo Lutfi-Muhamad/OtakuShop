@@ -66,7 +66,7 @@ class AuthController extends GetxController {
 
     if (res.statusCode == 200) {
       final decoded = jsonDecode(res.body);
-      user.value = User.fromJson(decoded['user']); // photo sudah URL ✅
+      user.value = User.fromJson(decoded['user']);
 
       print('[DEBUG] tokoId = ${user.value?.tokoId}');
     } else {

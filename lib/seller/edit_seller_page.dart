@@ -39,27 +39,6 @@ class EditSellerPage extends StatelessWidget {
             ),
 
             // =========================
-            //       BACK BUTTON "<"
-            // =========================
-            Positioned(
-              left: 16,
-              top: 70,
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.arrow_back, size: 20, color: Colors.red),
-                ),
-              ),
-            ),
-
-            // =========================
             //     MAIN CONTENT
             // =========================
             Padding(
