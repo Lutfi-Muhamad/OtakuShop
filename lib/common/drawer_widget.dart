@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otakushop/analytics/best_sales_page.dart';
 import 'package:otakushop/analytics/chart_page.dart';
-import 'package:otakushop/analytics/total_sales.dart';
+import 'package:otakushop/analytics/total_sales_page.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
