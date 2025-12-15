@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../services/auth_service.dart';
+import '../services/auth_controller.dart';
+import 'package:get/get.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -11,6 +12,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  final auth = Get.find<AuthController>();
   List carts = [];
   bool isLoading = true;
 
@@ -20,53 +22,51 @@ class _CartPageState extends State<CartPage> {
     checkAuth();
   }
 
-  Future<void> checkAuth() async {
-  final token = await AuthService.getToken();
-
-  if (token == null) {
-    // Tidak ada token, tendang ke login
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/login');
+  void checkAuth() {
+    if (auth.token.value.isEmpty) {
+      Get.offAllNamed('/login');
+    } else {
+      fetchCart();
     }
-  } else {
-    fetchCart();
   }
-}
-
 
   // =========================
   // GET CART FROM API
   // =========================
   Future<void> fetchCart() async {
-    final token = await AuthService.getToken();
+    setState(() => isLoading = true);
 
     final res = await http.get(
       Uri.parse(
         "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api/cart",
       ),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      headers: auth.headers(json: false),
     );
 
-    final data = json.decode(res.body);
-
-    setState(() {
-      carts = data['carts'] ?? [];
-      isLoading = false;
-    });
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      setState(() {
+        carts = data['carts'] ?? [];
+        isLoading = false;
+      });
+    } else if (res.statusCode == 401) {
+      await auth.logout();
+      Get.offAllNamed('/login');
+    } else {
+      setState(() => isLoading = false);
+    }
   }
 
   // =========================
   // UPDATE QTY
   // =========================
   Future<void> updateQty(int cartId, int qty) async {
-    final token = await AuthService.getToken();
-
     await http.put(
       Uri.parse(
         "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api/cart/$cartId",
       ),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-      body: {"qty": qty.toString()},
+      headers: auth.headers(),
+      body: jsonEncode({"qty": qty}),
     );
 
     fetchCart();
@@ -76,13 +76,11 @@ class _CartPageState extends State<CartPage> {
   // DELETE CART
   // =========================
   Future<void> deleteCart(int cartId) async {
-    final token = await AuthService.getToken();
-
     await http.delete(
       Uri.parse(
         "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api/cart/$cartId",
       ),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      headers: auth.headers(json: false),
     );
 
     fetchCart();
