@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otakushop/models/sold_products.dart';
-// import 'package:otakushop/services/seller_product_service.dart';
 
 class TotalSalesPage extends StatefulWidget {
   const TotalSalesPage({super.key});
@@ -16,10 +15,32 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _futureSales = _loadDummyData();
   }
 
-  void _loadData() {
+  /// DUMMY DATA (UI ONLY)
+  Future<List<SoldProduct>> _loadDummyData() async {
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      SoldProduct(
+        name: "Nendoroid Gojo Satoru",
+        category: "Figure",
+        image: "",
+        sold: 120,
+      ),
+      SoldProduct(
+        name: "One Piece Luffy Gear 5",
+        category: "Figure",
+        image: "",
+        sold: 95,
+      ),
+      SoldProduct(
+        name: "Naruto Hoodie",
+        category: "Apparel",
+        image: "",
+        sold: 60,
+      ),
+    ];
   }
 
   @override
@@ -34,31 +55,18 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
               ? "Total Sales"
               : "Kategori: $selectedCategory",
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-            },
-            child: const Text(
-              "Pilih Kategori",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
       ),
       body: FutureBuilder<List<SoldProduct>>(
         future: _futureSales,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
             return const Center(
               child: Text(
-                "Gagal mengambil data",
+                "Terjadi kesalahan",
                 style: TextStyle(color: Colors.white),
               ),
             );
@@ -68,10 +76,7 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
             return const Center(
               child: Text(
                 "Belum ada produk yang terjual",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white),
               ),
             );
           }
@@ -80,14 +85,14 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: products.length,
-            itemBuilder: (_, i) =>
-                _productCard(products[i]),
+            itemBuilder: (_, i) => _productCard(products[i]),
           );
         },
       ),
     );
   }
 
+  /// CARD PRODUK (TANPA IMAGE)
   Widget _productCard(SoldProduct product) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -98,10 +103,14 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
       ),
       child: Row(
         children: [
-          Image.network(
-            product.image,
-            width: 70,
-            height: 70,
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.shopping_bag, color: Colors.pink, size: 30),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -110,9 +119,7 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
               children: [
                 Text(
                   product.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Text(product.category),
@@ -124,5 +131,12 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
         ],
       ),
     );
+  }
+
+  /// DUMMY PILIH KATEGORI
+  void _selectCategory() {
+    setState(() {
+      selectedCategory = selectedCategory == null ? "Figure" : null;
+    });
   }
 }

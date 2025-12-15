@@ -97,9 +97,18 @@ class _ChartCard extends StatelessWidget {
         .where((d) => salesData.containsKey(d))
         .toList();
 
-    final double maxY = salesData.values.isNotEmpty
-        ? salesData.values.reduce((a, b) => a > b ? a : b).toDouble() + 50
-        : 100;
+    // 👉 JIKA DATA KOSONG
+    if (visibleDays.isEmpty) {
+      return const Center(
+        child: Text(
+          'No sales data available',
+          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+        ),
+      );
+    }
+
+    final double maxY =
+        salesData.values.reduce((a, b) => a > b ? a : b).toDouble() + 50;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
@@ -119,7 +128,6 @@ class _ChartCard extends StatelessWidget {
           maxY: maxY,
           alignment: BarChartAlignment.spaceAround,
           barTouchData: BarTouchData(enabled: true),
-
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
@@ -154,10 +162,17 @@ class _ChartCard extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+
+                  // 👉 GUARD INDEX
+                  if (index < 0 || index >= visibleDays.length) {
+                    return const SizedBox.shrink();
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      visibleDays[value.toInt()],
+                      visibleDays[index],
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

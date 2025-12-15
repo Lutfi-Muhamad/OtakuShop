@@ -6,17 +6,36 @@ import 'package:otakushop/models/user.dart';
 import 'dart:io';
 
 class AuthController extends GetxController {
-  // ================= STATE =================
+  final String instanceId = DateTime.now().millisecondsSinceEpoch.toString();
+
   final token = ''.obs;
   final user = Rxn<User>();
 
   static const String baseUrl =
       'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
 
-  // ================= LIFECYCLE =================
   @override
   void onInit() {
     super.onInit();
+    print('🟢 AuthController INIT → instanceId=$instanceId');
+    initAuth();
+  }
+
+  @override
+  void onClose() {
+    print('🔴 AuthController CLOSE → instanceId=$instanceId');
+    super.onClose();
+  }
+
+  Future<void> initAuth() async {
+    print('🟡 initAuth START → instanceId=$instanceId');
+    await loadToken();
+    print('🟡 token setelah loadToken = "${token.value}"');
+
+    if (token.value.isNotEmpty) {
+      await refreshUser();
+    }
+    print('🟡 initAuth END → instanceId=$instanceId');
   }
 
   // ================= HELPER =================

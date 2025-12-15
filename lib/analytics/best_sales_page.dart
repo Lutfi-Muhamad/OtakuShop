@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:otakushop/models/sold_products.dart';
-// import 'package:otakushop/services/seller_product_service.dart';
 
 class BestSellerPage extends StatefulWidget {
   const BestSellerPage({super.key});
@@ -15,6 +14,31 @@ class _BestSellerPageState extends State<BestSellerPage> {
   @override
   void initState() {
     super.initState();
+    _futureBestSeller = _loadDummyData();
+  }
+
+  Future<List<SoldProduct>> _loadDummyData() async {
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      SoldProduct(
+        name: "Nendoroid Gojo Satoru",
+        category: "Figure",
+        image: "", // TIDAK DIPAKAI
+        sold: 120,
+      ),
+      SoldProduct(
+        name: "One Piece Luffy Gear 5",
+        category: "Figure",
+        image: "",
+        sold: 95,
+      ),
+      SoldProduct(
+        name: "Naruto Shippuden Hoodie",
+        category: "Apparel",
+        image: "",
+        sold: 80,
+      ),
+    ];
   }
 
   @override
@@ -29,17 +53,14 @@ class _BestSellerPageState extends State<BestSellerPage> {
       body: FutureBuilder<List<SoldProduct>>(
         future: _futureBestSeller,
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
             return const Center(
               child: Text(
-                "Gagal mengambil data",
+                "Terjadi kesalahan",
                 style: TextStyle(color: Colors.white),
               ),
             );
@@ -49,10 +70,7 @@ class _BestSellerPageState extends State<BestSellerPage> {
             return const Center(
               child: Text(
                 "Belum ada produk terjual",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.white),
               ),
             );
           }
@@ -115,17 +133,24 @@ class _BestSellerPageState extends State<BestSellerPage> {
                   color: Colors.pink,
                 ),
               ),
-              const SizedBox(width: 12),
-              Image.network(
-                product.image,
-                width: 70,
-                height: 70,
+              const SizedBox(width: 16),
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.pink.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.shopping_bag,
+                  color: Colors.pink,
+                  size: 32,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       product.name,

@@ -19,16 +19,33 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => loading = true);
 
     final auth = Get.find<AuthController>();
+
+    // ===== DEBUG START =====
+    print('🔐 LOGIN PAGE');
+    print('🔐 Auth instanceId = ${auth.instanceId}');
+    print('🔐 token BEFORE login = "${auth.token.value}"');
+    // ===== DEBUG END =====
+
     final success = await auth.login(email.text.trim(), password.text.trim());
+
+    // ===== DEBUG START =====
+    print('🔐 token AFTER login = "${auth.token.value}"');
+    print('🔐 user AFTER login = ${auth.user.value}');
+    // ===== DEBUG END =====
 
     setState(() => loading = false);
 
     if (success) {
+      print('🔐 LOGIN SUCCESS → redirect to HOME');
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("✅ Login Berhasil")));
+
       Get.offAllNamed('/');
     } else {
+      print('🔐 LOGIN FAILED');
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("❌ Login Gagal")));
@@ -55,7 +72,9 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: loading ? null : doLogin,
-              child: const Text("Login"),
+              child: loading
+                  ? const CircularProgressIndicator()
+                  : const Text("Login"),
             ),
             const SizedBox(height: 16),
             Row(
