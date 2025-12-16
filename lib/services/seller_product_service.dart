@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
-
 import 'auth_controller.dart';
 
 class SellerProductService {
@@ -135,23 +134,62 @@ class SellerProductService {
   /// ===========================================================
   /// UPDATE PRODUCT
   /// ===========================================================
-  Future<bool> updateProduct(int id, Map<String, dynamic> data) async {
-    try {
-      await _auth.loadToken();
+  Future<Map<String, dynamic>> getProductForEdit(
+    int storeId,
+    int productId,
+  ) async {
+    debugPrint("🌐 [API CALL]");
+    debugPrint("➡️ GET /store/$storeId/products/$productId");
 
-      final response = await http.put(
-        Uri.parse('$baseUrl/products/$id'),
-        headers: {
-          'Authorization': 'Bearer ${_auth.token.value}',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(data),
-      );
+    await _auth.loadToken();
 
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
+    debugPrint("🔑 TOKEN = ${_auth.token.value}");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/store/$storeId/products/$productId'),
+      headers: {
+        'Authorization': 'Bearer ${_auth.token.value}',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    );
+
+    debugPrint("🌐 STATUS = ${response.statusCode}");
+    debugPrint("🌐 BODY = ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body)['product'];
+    } else {
+      throw Exception('Gagal ambil data produk');
+    }
+  }
+
+  Future<void> updateProduct({
+    required int storeId,
+    required int productId,
+    required AuthController auth,
+    required String name,
+    required String price,
+    required String description,
+  }) async {
+    await auth.loadToken();
+
+    final url = '${AuthController.baseUrl}/store/$storeId/products/$productId';
+
+    debugPrint("🟦 [UPDATE PRODUCT]");
+    debugPrint("🌐 PUT $url");
+
+    final response = await http.put(
+      Uri.parse(url),
+      headers: auth.headers(json: false), // 🔥 PAKAI AUTH CONTROLLER
+      body: {'name': name, 'price': price, 'description': description},
+    );
+
+    debugPrint("📡 STATUS = ${response.statusCode}");
+    debugPrint("📡 BODY = ${response.body}");
+
+    if (response.statusCode != 200) {
+      throw Exception('Update produk gagal');
     }
   }
 

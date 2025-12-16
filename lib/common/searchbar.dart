@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/pages/home_page.dart';
 
 class SearchBarWidget extends StatelessWidget {
   const SearchBarWidget({super.key});
@@ -14,13 +13,11 @@ class SearchBarWidget extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
+                Navigator.pop(context);
               },
               child: const Icon(Icons.arrow_back, size: 28),
             ),
+
             const SizedBox(width: 10),
             Expanded(
               child: Container(

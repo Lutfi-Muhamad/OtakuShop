@@ -262,9 +262,19 @@ class _SellerPageState extends State<SellerPage> {
               // EDIT
               GestureDetector(
                 onTap: () {
+                  debugPrint("🟦 [SELLER PAGE]");
+                  debugPrint("✏️ EDIT ICON CLICKED");
+                  debugPrint("📦 productId = $productId");
+                  debugPrint("🏪 tokoId = ${auth.user.value?.tokoId}");
+
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => EditSellerPage()),
+                    MaterialPageRoute(
+                      builder: (_) => EditSellerPage(
+                        productId: productId,
+                        storeId: auth.user.value!.tokoId!,
+                      ),
+                    ),
                   );
                 },
                 child: const Icon(Icons.edit, size: 18, color: Colors.blue),

@@ -1,188 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:otakushop/seller/seller_profile_page.dart';
-// import 'seller_page.dart';
-// import 'user_profile_page.dart';
+import 'package:get/get.dart';
+import 'package:otakushop/common/navbar.dart';
+import 'package:otakushop/common/drawer_widget.dart';
+import 'package:otakushop/services/seller_product_service.dart';
+import 'package:otakushop/services/auth_controller.dart';
 
-class EditSellerPage extends StatelessWidget {
-  const EditSellerPage({super.key});
+class EditSellerPage extends StatefulWidget {
+  final int productId;
+  final int storeId;
+
+  const EditSellerPage({
+    super.key,
+    required this.productId,
+    required this.storeId,
+  });
+
+  @override
+  State<EditSellerPage> createState() => _EditSellerPageState();
+}
+
+class _EditSellerPageState extends State<EditSellerPage> {
+  // ✅ CONTROLLERS (INI YANG TADI KURANG)
+  final TextEditingController nameC = TextEditingController();
+  final TextEditingController priceC = TextEditingController();
+  final TextEditingController descC = TextEditingController();
+
+  final AuthController auth = Get.find<AuthController>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    debugPrint("🟨 [EDIT SELLER PAGE]");
+    debugPrint("🚪 PAGE OPENED");
+    debugPrint("📦 productId = ${widget.productId}");
+    debugPrint("🏪 storeId = ${widget.storeId}");
+    debugPrint("✅ LOGIC PAGE SUDAH MASUK");
+  }
+
+  @override
+  void dispose() {
+    nameC.dispose();
+    priceC.dispose();
+    descC.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       backgroundColor: const Color(0xFFFF88B7),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            // =========================
-            //          NAVBAR
-            // =========================
-            Container(
-              height: 60,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              color: Colors.pinkAccent,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Icon(Icons.menu, color: Colors.black, size: 30),
+            const PinkNavbar(),
 
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const ProfilePage()),
-                      );
-                    },
-                    child: const Icon(Icons.person, color: Colors.black, size: 30),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const Text(
+                    "Edit Produk",
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
 
-            // =========================
-            //     MAIN CONTENT
-            // =========================
-            Padding(
-              padding: const EdgeInsets.only(top: 120),
-              child: Center(
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Container(
-                  width: 330,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // =========================
-                      //      IMAGE PREVIEW
-                      // =========================
-                      Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              "https://i.imgur.com/rE9Y6LZ.jpeg",
-                              height: 220,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                      _label("Nama"),
+                      _input(controller: nameC),
 
-                          Positioned.fill(
-                            child: Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.4),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.photo_camera,
-                                    size: 40, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 12),
+
+                      _label("Harga"),
+                      _input(
+                        controller: priceC,
+                        keyboardType: TextInputType.number,
                       ),
 
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
 
-                      // =========================
-                      //      LIMITED TAG
-                      // =========================
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.purple,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          "Limited",
-                          style: TextStyle(color: Colors.white, fontSize: 12),
-                        ),
+                      _label("Deskripsi"),
+                      TextField(
+                        controller: descC,
+                        maxLines: 4,
+                        decoration: _decoration(),
                       ),
 
                       const SizedBox(height: 20),
 
-                      // =========================
-                      //      FORM INPUT
-                      // =========================
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text("Nama", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey.shade200,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text("Harga", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: Colors.grey.shade200,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 15),
-
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text("Dekripsi", style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        height: 120,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const TextField(
-                          maxLines: null,
-                          decoration:
-                              InputDecoration(border: InputBorder.none),
-                        ),
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      // =========================
-                      //      BUTTON SAVE
-                      // =========================
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pinkAccent,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          onPressed: () {},
-                          child: const Text(
-                            "Simpan Perubahan",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
+                          onPressed: _saveProduct,
+                          child: const Text("Simpan"),
                         ),
                       ),
                     ],
@@ -192,6 +120,72 @@ class EditSellerPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // =========================
+  // SAVE LOGIC (PUT API)
+  // =========================
+  Future<void> _saveProduct() async {
+    debugPrint("💾 SAVE CLICKED");
+    debugPrint("📦 productId = ${widget.productId}");
+    debugPrint("🏪 storeId = ${widget.storeId}");
+    debugPrint("✏️ name = ${nameC.text}");
+    debugPrint("💰 price = ${priceC.text}");
+    debugPrint("📝 desc = ${descC.text}");
+
+    try {
+      await SellerProductService().updateProduct(
+        storeId: widget.storeId,
+        productId: widget.productId,
+        auth: auth, // ⬅️ pakai AuthController kamu
+        name: nameC.text,
+        price: priceC.text,
+        description: descC.text,
+      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Produk berhasil diupdate")));
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      debugPrint("❌ UPDATE ERROR = $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  // =========================
+  // HELPER
+  // =========================
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _input({
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: _decoration(),
+    );
+  }
+
+  InputDecoration _decoration() {
+    return InputDecoration(
+      filled: true,
+      fillColor: Colors.grey.shade200,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide.none,
       ),
     );
   }
