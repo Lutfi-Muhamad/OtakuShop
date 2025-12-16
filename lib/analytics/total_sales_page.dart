@@ -36,13 +36,13 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
     final storeId = auth.user.value?.tokoId;
 
     if (storeId == null) {
-      throw Exception('STORE ID TIDAK DITEMUKAN');
+      throw Exception('Kamu Belum Memiliki Toko');
     }
 
     debugPrint("🏪 storeId = $storeId");
     debugPrint("🔐 token = ${auth.token.value}");
 
-    final data = await ReportService.fetchTotalSales(storeId: storeId);
+    final data = await ReportService.fetchSales(storeId: storeId);
 
     debugPrint("✅ DATA RECEIVED: ${data.length}");
 

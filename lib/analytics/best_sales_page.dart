@@ -14,8 +14,10 @@ class BestSalesPage extends StatefulWidget {
 class _BestSalesPageState extends State<BestSalesPage> {
   final AuthController auth = Get.find<AuthController>();
 
-  String selectedFilter = 'all'; // all | category
-  String? selectedCategory;
+  // ===== FILTER STATE =====
+  String? selectedOrder; // 'top' | 'bottom'
+  String? selectedCategory; // 'nendroid' | 'bags' | 'figure'
+  String? selectedSeries; // 'onepiece' | 'jjk'
 
   late Future<List<SoldProduct>> _futureBestSales;
 
@@ -37,18 +39,21 @@ class _BestSalesPageState extends State<BestSalesPage> {
       throw Exception('STORE ID TIDAK ADA');
     }
 
-    final data = await ReportService.fetchBestSales(
+    final data = await ReportService.fetchSales(
       storeId: storeId,
-      category: selectedFilter == 'category' ? selectedCategory : null,
+      order: selectedOrder,
+      category: selectedCategory,
+      series: selectedSeries,
     );
 
     return data.map((e) => SoldProduct.fromJson(e)).toList();
   }
 
-  void _applyFilter({required String filter, String? category}) {
+  void _applyFilter({String? order, String? category, String? series}) {
     setState(() {
-      selectedFilter = filter;
-      selectedCategory = category;
+      if (order != null) selectedOrder = order;
+      if (category != null) selectedCategory = category;
+      if (series != null) selectedSeries = series;
       _futureBestSales = _loadBestSales();
     });
   }
@@ -71,36 +76,77 @@ class _BestSalesPageState extends State<BestSalesPage> {
     );
   }
 
+  // ================= FILTER UI =================
+
   Widget _filterBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ChoiceChip(
-            label: const Text('Semua'),
-            selected: selectedFilter == 'all',
-            onSelected: (_) => _applyFilter(filter: 'all'),
+          // ===== ORDER =====
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Teratas'),
+                selected: selectedOrder == 'top',
+                onSelected: (_) => _applyFilter(order: 'top'),
+              ),
+              ChoiceChip(
+                label: const Text('Terendah'),
+                selected: selectedOrder == 'bottom',
+                onSelected: (_) => _applyFilter(order: 'bottom'),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('Figure'),
-            selected:
-                selectedFilter == 'category' && selectedCategory == 'Figure',
-            onSelected: (_) =>
-                _applyFilter(filter: 'category', category: 'Figure'),
+          const SizedBox(height: 8),
+
+          // ===== CATEGORY =====
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('Nendroid'),
+                selected: selectedCategory == 'nendroid',
+                onSelected: (_) => _applyFilter(category: 'nendroid'),
+              ),
+              ChoiceChip(
+                label: const Text('Bags'),
+                selected: selectedCategory == 'bags',
+                onSelected: (_) => _applyFilter(category: 'bags'),
+              ),
+              ChoiceChip(
+                label: const Text('Figure'),
+                selected: selectedCategory == 'figure',
+                onSelected: (_) => _applyFilter(category: 'figure'),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          ChoiceChip(
-            label: const Text('Apparel'),
-            selected:
-                selectedFilter == 'category' && selectedCategory == 'Apparel',
-            onSelected: (_) =>
-                _applyFilter(filter: 'category', category: 'Apparel'),
+          const SizedBox(height: 8),
+
+          // ===== SERIES =====
+          Wrap(
+            spacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('One Piece'),
+                selected: selectedSeries == 'onepiece',
+                onSelected: (_) => _applyFilter(series: 'onepiece'),
+              ),
+              ChoiceChip(
+                label: const Text('JJK'),
+                selected: selectedSeries == 'jjk',
+                onSelected: (_) => _applyFilter(series: 'jjk'),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
+  // ================= CONTENT =================
 
   Widget _content() {
     return FutureBuilder<List<SoldProduct>>(
@@ -123,7 +169,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
             child: Text(
-              'Belum ada data best seller',
+              'Belum ada data penjualan',
               style: TextStyle(color: Colors.white),
             ),
           );
@@ -178,7 +224,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
-                Text(product.category),
+                Text('${product.category} • ${product.series}'),
                 const SizedBox(height: 4),
                 Text("Terjual x${product.sold}"),
               ],

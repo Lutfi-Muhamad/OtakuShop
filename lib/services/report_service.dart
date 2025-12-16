@@ -8,9 +8,13 @@ class ReportService {
   static const String baseUrl =
       "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api";
 
-  static Future<List<dynamic>> fetchTotalSales({required int storeId}) async {
+  static Future<List<dynamic>> fetchSales({
+    required int storeId,
+    String? order, // top | bottom
+    String? category, // nendroid | bags | figure
+    String? series, // onepiece | jjk
+  }) async {
     final auth = Get.find<AuthController>();
-
     final token = auth.token.value;
 
     debugPrint("🔐 REPORT TOKEN = '$token'");
@@ -19,45 +23,32 @@ class ReportService {
       throw Exception('TOKEN KOSONG. AUTH BELUM SIAP.');
     }
 
-    final url = Uri.parse("$baseUrl/store/$storeId/reports/total-sales");
+    // build query param
+    final params = <String, String>{};
+
+    if (order != null) params['order'] = order;
+    if (category != null) params['category'] = category;
+    if (series != null) params['series'] = series;
+
+    final uri = Uri.parse(
+      "$baseUrl/store/$storeId/reports/sales",
+    ).replace(queryParameters: params.isEmpty ? null : params);
+
+    debugPrint("🌐 HIT API: $uri");
 
     final response = await http.get(
-      url,
+      uri,
       headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
     );
 
     debugPrint("📦 STATUS: ${response.statusCode}");
     debugPrint("📦 BODY: ${response.body}");
 
+    if (response.statusCode != 200) {
+      throw Exception(response.body);
+    }
+
     final decoded = json.decode(response.body);
-    return decoded['data'];
-  }
-
-// Best
-  static Future<List<dynamic>> fetchBestSales({
-    required int storeId,
-    String? category,
-  }) async {
-    final auth = Get.find<AuthController>();
-
-    final token = auth.token.value;
-    if (token.isEmpty) {
-      throw Exception('TOKEN KOSONG');
-    }
-
-    final query = category != null ? '?category=$category' : '';
-    final url = Uri.parse("$baseUrl/store/$storeId/reports/best-sales$query");
-
-    final res = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception(res.body);
-    }
-
-    final decoded = jsonDecode(res.body);
     return decoded['data'];
   }
 }
