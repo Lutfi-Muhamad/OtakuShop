@@ -32,8 +32,8 @@ class AppDrawer extends StatelessWidget {
 
               _drawerButton(
                 context,
-                title: "Best Seller Page",
-                page: const BestSellerPage(),
+                title: "Best Sales Page",
+                page: const BestSalesPage(),
               ),
 
               _drawerButton(

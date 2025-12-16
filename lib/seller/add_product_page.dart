@@ -17,12 +17,12 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController stockController = TextEditingController();
 
   String? selectedSeries;
+  String? selectedCategory;
   List<File> selectedImages = [];
 
   final ImagePicker picker = ImagePicker();
   final SellerProductService productService = SellerProductService();
 
-  // sementara (ambil dari database user nanti)
   int tokoId = 2;
 
   // ==============================
@@ -30,7 +30,6 @@ class _AddProductPageState extends State<AddProductPage> {
   // ==============================
   Future<void> pickImages() async {
     final List<XFile>? files = await picker.pickMultiImage();
-
     if (files != null) {
       setState(() {
         selectedImages = files.map((e) => File(e.path)).toList();
@@ -39,28 +38,46 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   // ==============================
-  // SERIES BOX
+  // SERIES BUTTON
   // ==============================
   Widget choiceSeries(String title, String value) {
+    return _choiceBox(
+      title: title,
+      selected: selectedSeries == value,
+      onTap: () => setState(() => selectedSeries = value),
+    );
+  }
+
+  // ==============================
+  // CATEGORY BUTTON
+  // ==============================
+  Widget choiceCategory(String title, String value) {
+    return _choiceBox(
+      title: title,
+      selected: selectedCategory == value,
+      onTap: () => setState(() => selectedCategory = value),
+    );
+  }
+
+  Widget _choiceBox({
+    required String title,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedSeries = value;
-        });
-      },
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: selectedSeries == value ? Colors.pink : Colors.white,
+          color: selected ? Colors.pink : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey),
         ),
         child: Text(
           title,
           style: TextStyle(
-            color: selectedSeries == value ? Colors.white : Colors.black,
+            color: selected ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
-            fontSize: 15,
           ),
         ),
       ),
@@ -71,14 +88,18 @@ class _AddProductPageState extends State<AddProductPage> {
   // SUBMIT
   // ==============================
   Future<void> submitProduct() async {
-    // ================= VALIDASI =================
     if (selectedImages.isEmpty) {
       showMsg("Pilih minimal 1 foto");
       return;
     }
 
     if (selectedSeries == null) {
-      showMsg("Pilih series produk terlebih dahulu");
+      showMsg("Pilih series produk");
+      return;
+    }
+
+    if (selectedCategory == null) {
+      showMsg("Pilih kategori produk");
       return;
     }
 
@@ -90,10 +111,10 @@ class _AddProductPageState extends State<AddProductPage> {
       return;
     }
 
-    // ================= SUBMIT =================
     try {
       final result = await productService.createProduct(
         name: nameController.text,
+        category: selectedCategory!, // ← TERKIRIM
         description: descController.text,
         price: int.parse(priceController.text),
         stock: int.parse(stockController.text),
@@ -146,9 +167,6 @@ class _AddProductPageState extends State<AddProductPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ==============================
-                // FOTO PRODUK
-                // ==============================
                 const Text(
                   "Foto Produk",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -159,7 +177,6 @@ class _AddProductPageState extends State<AddProductPage> {
                   onTap: pickImages,
                   child: Container(
                     height: 160,
-                    width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10),
@@ -178,7 +195,7 @@ class _AddProductPageState extends State<AddProductPage> {
                             children: selectedImages
                                 .map(
                                   (img) => Padding(
-                                    padding: const EdgeInsets.all(8.0),
+                                    padding: const EdgeInsets.all(8),
                                     child: Image.file(img, height: 150),
                                   ),
                                 )
@@ -189,9 +206,6 @@ class _AddProductPageState extends State<AddProductPage> {
 
                 const SizedBox(height: 20),
 
-                // ==============================
-                // SERIES
-                // ==============================
                 const Text(
                   "Series",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -207,28 +221,35 @@ class _AddProductPageState extends State<AddProductPage> {
 
                 const SizedBox(height: 25),
 
-                // ==============================
-                // INPUT FORM
-                // ==============================
+                const Text(
+                  "Kategori",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    choiceCategory("Nendoroid", "nendoroid"),
+                    choiceCategory("Bags", "bags"),
+                    choiceCategory("Figure", "figure"),
+                  ],
+                ),
+
+                const SizedBox(height: 25),
+
                 makeField("Nama Produk", nameController),
                 const SizedBox(height: 16),
-
                 makeField("Harga", priceController, type: TextInputType.number),
                 const SizedBox(height: 16),
-
                 makeField("Stok", stockController, type: TextInputType.number),
                 const SizedBox(height: 16),
-
                 makeField("Deskripsi", descController, lines: 4),
                 const SizedBox(height: 25),
 
-                // ==============================
-                // BUTTON CONFIRM
-                // ==============================
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: submitProduct, // ← WAJIB ADA INI!
+                    onPressed: submitProduct,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.pink,
                     ),
@@ -246,9 +267,6 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  // ============================================================
-  // WIDGET TEXT FIELD
-  // ============================================================
   Widget makeField(
     String title,
     TextEditingController c, {

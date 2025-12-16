@@ -2,6 +2,7 @@ class Product {
   final int id;
   final String name;
   final String description;
+  final String category;
   final int? price;
   final int stock;
   final List<String> images;
@@ -11,6 +12,7 @@ class Product {
   Product({
     required this.id,
     required this.name,
+    required this.category,
     required this.description,
     required this.price,
     required this.stock,
@@ -25,8 +27,9 @@ class Product {
       name: json['name'],
       description: json['description'],
       price: json['price'],
+      category: json['category'],
       stock: json['stock'],
-      images: List<String>.from(json['images']), // ✅ FIX UTAMA DI SINI
+      images: List<String>.from(json['images']),
       imageType: json['image_type'],
       aspectRatio: json['aspect_ratio'],
     );

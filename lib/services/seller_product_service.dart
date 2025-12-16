@@ -18,6 +18,7 @@ class SellerProductService {
   /// ===========================================================
   Future<Map<String, dynamic>> createProduct({
     required String name,
+    required String category,
     required String description,
     required int price,
     required int stock,
@@ -49,6 +50,7 @@ class SellerProductService {
       // ================= FIELDS =================
       request.fields.addAll({
         'name': name,
+        'category': category,
         'description': description,
         'price': price.toString(),
         'stock': stock.toString(),

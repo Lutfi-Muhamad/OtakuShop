@@ -1,33 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/models/sold_products.dart';
+import 'package:otakushop/services/report_service.dart';
 
-class BestSellerPage extends StatefulWidget {
-  const BestSellerPage({super.key});
+class BestSalesPage extends StatefulWidget {
+  const BestSalesPage({super.key});
 
   @override
-  State<BestSellerPage> createState() => _BestSellerPageState();
+  State<BestSalesPage> createState() => _BestSalesPageState();
 }
 
-class _BestSellerPageState extends State<BestSellerPage> {
-  late Future<List<SoldProduct>> _futureBestSeller;
+class _BestSalesPageState extends State<BestSalesPage> {
+  final AuthController auth = Get.find<AuthController>();
+
+  String selectedFilter = 'all'; // all | category
+  String? selectedCategory;
+
+  late Future<List<SoldProduct>> _futureBestSales;
 
   @override
   void initState() {
     super.initState();
-    _futureBestSeller = _loadDummyData();
+    _futureBestSales = _loadBestSales();
   }
 
-  Future<List<SoldProduct>> _loadDummyData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      SoldProduct(name: "Nendoroid Gojo Satoru", category: "Figure", sold: 120),
-      SoldProduct(name: "One Piece Luffy Gear 5", category: "Figure", sold: 95),
-      SoldProduct(
-        name: "Naruto Shippuden Hoodie",
-        category: "Apparel",
-        sold: 80,
-      ),
-    ];
+  Future<List<SoldProduct>> _loadBestSales() async {
+    await auth.loadToken();
+
+    if (auth.token.value.isEmpty) {
+      throw Exception('TOKEN KOSONG');
+    }
+
+    final storeId = auth.user.value?.tokoId;
+    if (storeId == null) {
+      throw Exception('STORE ID TIDAK ADA');
+    }
+
+    final data = await ReportService.fetchBestSales(
+      storeId: storeId,
+      category: selectedFilter == 'category' ? selectedCategory : null,
+    );
+
+    return data.map((e) => SoldProduct.fromJson(e)).toList();
+  }
+
+  void _applyFilter({required String filter, String? category}) {
+    setState(() {
+      selectedFilter = filter;
+      selectedCategory = category;
+      _futureBestSales = _loadBestSales();
+    });
   }
 
   @override
@@ -37,43 +60,83 @@ class _BestSellerPageState extends State<BestSellerPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFFF7FAF),
         elevation: 0,
-        title: const Text("Best Seller Item"),
+        title: const Text('Best Sales'),
       ),
-      body: FutureBuilder<List<SoldProduct>>(
-        future: _futureBestSeller,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          _filterBar(),
+          Expanded(child: _content()),
+        ],
+      ),
+    );
+  }
 
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text(
-                "Terjadi kesalahan",
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+  Widget _filterBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          ChoiceChip(
+            label: const Text('Semua'),
+            selected: selectedFilter == 'all',
+            onSelected: (_) => _applyFilter(filter: 'all'),
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('Figure'),
+            selected:
+                selectedFilter == 'category' && selectedCategory == 'Figure',
+            onSelected: (_) =>
+                _applyFilter(filter: 'category', category: 'Figure'),
+          ),
+          const SizedBox(width: 8),
+          ChoiceChip(
+            label: const Text('Apparel'),
+            selected:
+                selectedFilter == 'category' && selectedCategory == 'Apparel',
+            onSelected: (_) =>
+                _applyFilter(filter: 'category', category: 'Apparel'),
+          ),
+        ],
+      ),
+    );
+  }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Text(
-                "Belum ada produk terjual",
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+  Widget _content() {
+    return FutureBuilder<List<SoldProduct>>(
+      future: _futureBestSales,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          final products = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: products.length,
-            itemBuilder: (_, index) {
-              return _bestSellerCard(product: products[index], rank: index + 1);
-            },
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              snapshot.error.toString(),
+              style: const TextStyle(color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
           );
-        },
-      ),
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              'Belum ada data best seller',
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        }
+
+        final products = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: products.length,
+          itemBuilder: (_, i) =>
+              _bestSellerCard(product: products[i], rank: i + 1),
+        );
+      },
     );
   }
 
@@ -85,68 +148,41 @@ class _BestSellerPageState extends State<BestSellerPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(
-              child: Text(
-                "Best Seller Item",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          Text(
+            "$rank",
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.pink,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                "$rank",
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.pink,
+          const SizedBox(width: 16),
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.pink.shade50,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.shopping_bag, color: Colors.pink, size: 32),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.pink.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.shopping_bag,
-                  color: Colors.pink,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(product.category),
-                    const SizedBox(height: 4),
-                    Text("Terjual x${product.sold}"),
-                  ],
-                ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(product.category),
+                const SizedBox(height: 4),
+                Text("Terjual x${product.sold}"),
+              ],
+            ),
           ),
         ],
       ),
