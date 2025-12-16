@@ -20,22 +20,11 @@ class _BestSellerPageState extends State<BestSellerPage> {
   Future<List<SoldProduct>> _loadDummyData() async {
     await Future.delayed(const Duration(seconds: 1));
     return [
-      SoldProduct(
-        name: "Nendoroid Gojo Satoru",
-        category: "Figure",
-        image: "", // TIDAK DIPAKAI
-        sold: 120,
-      ),
-      SoldProduct(
-        name: "One Piece Luffy Gear 5",
-        category: "Figure",
-        image: "",
-        sold: 95,
-      ),
+      SoldProduct(name: "Nendoroid Gojo Satoru", category: "Figure", sold: 120),
+      SoldProduct(name: "One Piece Luffy Gear 5", category: "Figure", sold: 95),
       SoldProduct(
         name: "Naruto Shippuden Hoodie",
         category: "Apparel",
-        image: "",
         sold: 80,
       ),
     ];
@@ -80,10 +69,7 @@ class _BestSellerPageState extends State<BestSellerPage> {
             padding: const EdgeInsets.all(16),
             itemCount: products.length,
             itemBuilder: (_, index) {
-              return _bestSellerCard(
-                product: products[index],
-                rank: index + 1,
-              );
+              return _bestSellerCard(product: products[index], rank: index + 1);
             },
           );
         },
@@ -91,10 +77,7 @@ class _BestSellerPageState extends State<BestSellerPage> {
     );
   }
 
-  Widget _bestSellerCard({
-    required SoldProduct product,
-    required int rank,
-  }) {
+  Widget _bestSellerCard({required SoldProduct product, required int rank}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
@@ -154,9 +137,7 @@ class _BestSellerPageState extends State<BestSellerPage> {
                   children: [
                     Text(
                       product.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(product.category),

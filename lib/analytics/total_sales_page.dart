@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:otakushop/services/auth_controller.dart';
 import 'package:otakushop/models/sold_products.dart';
+import 'package:otakushop/services/report_service.dart';
 
 class TotalSalesPage extends StatefulWidget {
   const TotalSalesPage({super.key});
@@ -12,35 +15,38 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
   String? selectedCategory;
   late Future<List<SoldProduct>> _futureSales;
 
+  final AuthController auth = Get.find<AuthController>();
+
   @override
   void initState() {
     super.initState();
-    _futureSales = _loadDummyData();
+    _futureSales = _loadFromApi();
   }
 
-  /// DUMMY DATA (UI ONLY)
-  Future<List<SoldProduct>> _loadDummyData() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      SoldProduct(
-        name: "Nendoroid Gojo Satoru",
-        category: "Figure",
-        image: "",
-        sold: 120,
-      ),
-      SoldProduct(
-        name: "One Piece Luffy Gear 5",
-        category: "Figure",
-        image: "",
-        sold: 95,
-      ),
-      SoldProduct(
-        name: "Naruto Hoodie",
-        category: "Apparel",
-        image: "",
-        sold: 60,
-      ),
-    ];
+  Future<List<SoldProduct>> _loadFromApi() async {
+    debugPrint("📊 TotalSalesPage init");
+
+    // Pastikan token & user sudah siap
+    await auth.loadToken();
+
+    if (auth.token.value.isEmpty) {
+      throw Exception('TOKEN KOSONG - USER BELUM LOGIN');
+    }
+
+    final storeId = auth.user.value?.tokoId;
+
+    if (storeId == null) {
+      throw Exception('STORE ID TIDAK DITEMUKAN');
+    }
+
+    debugPrint("🏪 storeId = $storeId");
+    debugPrint("🔐 token = ${auth.token.value}");
+
+    final data = await ReportService.fetchTotalSales(storeId: storeId);
+
+    debugPrint("✅ DATA RECEIVED: ${data.length}");
+
+    return data.map((e) => SoldProduct.fromJson(e)).toList();
   }
 
   @override
@@ -64,10 +70,11 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
           }
 
           if (snapshot.hasError) {
-            return const Center(
+            return Center(
               child: Text(
-                "Terjadi kesalahan",
-                style: TextStyle(color: Colors.white),
+                snapshot.error.toString(),
+                style: const TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
               ),
             );
           }
@@ -92,7 +99,6 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
     );
   }
 
-  /// CARD PRODUK (TANPA IMAGE)
   Widget _productCard(SoldProduct product) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -131,12 +137,5 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
         ],
       ),
     );
-  }
-
-  /// DUMMY PILIH KATEGORI
-  void _selectCategory() {
-    setState(() {
-      selectedCategory = selectedCategory == null ? "Figure" : null;
-    });
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:otakushop/analytics/best_sales_page.dart';
 import 'package:otakushop/analytics/chart_page.dart';
 import 'package:otakushop/analytics/total_sales_page.dart';
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -25,19 +26,19 @@ class AppDrawer extends StatelessWidget {
 
               _drawerButton(
                 context,
-                title: "Total Sales",
+                title: "Total Sales Page",
                 page: const TotalSalesPage(),
               ),
 
               _drawerButton(
                 context,
-                title: "Best Seller Item",
+                title: "Best Seller Page",
                 page: const BestSellerPage(),
               ),
 
               _drawerButton(
                 context,
-                title: "Cart Sales",
+                title: "Cart Page",
                 page: const ChartPage(),
               ),
             ],
@@ -57,9 +58,16 @@ class AppDrawer extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
         onTap: () {
-          Navigator.pop(context); // tutup drawer dulu
-          Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+          debugPrint("➡️ Drawer clicked: $title");
+
+          Navigator.pop(context); // tutup drawer
+
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).push(MaterialPageRoute(builder: (_) => page));
         },
+
         child: Container(
           width: double.infinity,
           height: 48,
