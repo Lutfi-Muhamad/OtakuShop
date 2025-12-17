@@ -97,7 +97,7 @@ class _CartPageState extends State<CartPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Keranjang")),
+      appBar: AppBar(title: const Text("Kersanjang")),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : carts.isEmpty
@@ -203,11 +203,34 @@ class _CartPageState extends State<CartPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("✅ Checkout sukses")),
+                      onPressed: () async {
+                        final res = await http.post(
+                          Uri.parse(
+                            "https://hubbly-salma-unmaterialistically.ngrok-free.dev/api/cart/checkout",
+                          ),
+                          headers: auth.headers(json: false),
                         );
+
+                        debugPrint("🧾 CHECKOUT STATUS: ${res.statusCode}");
+                        debugPrint("🧾 RESPONSE: ${res.body}");
+
+                        if (res.statusCode == 200) {
+                          fetchCart();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("✅ Checkout sukses")),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "❌ ${jsonDecode(res.body)['message']}",
+                              ),
+                            ),
+                          );
+                        }
                       },
+
                       child: const Text("Checkout"),
                     ),
                   ),
