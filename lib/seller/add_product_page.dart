@@ -29,12 +29,13 @@ class _AddProductPageState extends State<AddProductPage> {
   // PICK MULTIPLE IMAGES
   // ==============================
   Future<void> pickImages() async {
-    final List<XFile>? files = await picker.pickMultiImage();
-    if (files != null) {
-      setState(() {
-        selectedImages = files.map((e) => File(e.path)).toList();
-      });
-    }
+    final List<XFile> files = await picker.pickMultiImage();
+
+    if (files.isEmpty) return;
+
+    setState(() {
+      selectedImages = files.map((e) => File(e.path)).toList();
+    });
   }
 
   // ==============================

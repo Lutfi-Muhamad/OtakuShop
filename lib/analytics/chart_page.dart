@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+
+import 'package:otakushop/services/auth_controller.dart';
+import 'package:otakushop/services/report_service.dart';
 
 enum ChartMode { weekly, monthly }
 
@@ -12,113 +16,102 @@ class ChartPage extends StatefulWidget {
 }
 
 class _ChartPageState extends State<ChartPage> {
-  ChartMode mode = ChartMode.weekly;
-  DateTime selectedMonth = DateTime.now();
-  int selectedIndex = 6; // default hari ini
+  final auth = Get.find<AuthController>();
 
-  late List<SalesDay> salesData;
+  ChartMode mode = ChartMode.weekly;
+  DateTime? selectedMonth;
+  int selectedIndex = 0;
+
+  bool loading = false;
+  String? error;
+
+  List<SalesDay> salesData = [];
 
   @override
   void initState() {
     super.initState();
-    _loadWeekly();
+    debugPrint("📊 CHART PAGE OPENED");
+    _loadWeekly(); // DEFAULT
   }
 
-  void _loadWeekly() {
-    final today = DateTime.now();
-    salesData = List.generate(7, (i) {
-      final date = today.subtract(Duration(days: 6 - i));
-      return SalesDay(
-        date: date,
-        totalSales: 40 + i * 25,
-        products: ['Nendoroid Luffy', 'Figure Gojo', 'Anime Bag'],
+  // =========================
+  // DATA LOADERS
+  // =========================
+
+  Future<void> _loadWeekly() async {
+    try {
+      loading = true;
+      error = null;
+      setState(() {});
+
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(days: 6));
+
+      debugPrint("📅 WEEKLY: $start → $now");
+
+      final raw = await ReportService.fetchChartSales(
+        storeId: auth.user.value!.tokoId!,
+        startDate: DateFormat('yyyy-MM-dd').format(start),
+        endDate: DateFormat('yyyy-MM-dd').format(now),
       );
-    });
-    selectedIndex = salesData.length - 1;
+
+      salesData = raw.map<SalesDay>((e) {
+        return SalesDay(
+          date: DateTime.parse(e['date']),
+          totalSales: e['total_sold'],
+          products: const [],
+        );
+      }).toList();
+
+      selectedIndex = salesData.isNotEmpty ? salesData.length - 1 : 0;
+    } catch (e) {
+      error = e.toString();
+      debugPrint("❌ LOAD WEEKLY FAILxED: $e");
+    } finally {
+      loading = false;
+      setState(() {});
+    }
   }
 
-  void _loadMonthly(DateTime month) {
-    final days = DateUtils.getDaysInMonth(month.year, month.month);
-    salesData = List.generate(days, (i) {
-      return SalesDay(
-        date: DateTime(month.year, month.month, i + 1),
-        totalSales: (i % 6) * 30 + 20,
-        products: ['Figure Naruto', 'Nendoroid Mikasa'],
+  Future<void> _loadMonthly(DateTime month) async {
+    try {
+      loading = true;
+      error = null;
+      setState(() {});
+
+
+      final start = DateTime(month.year, month.month, 1);
+      final end = DateTime(month.year, month.month + 1, 0);
+
+      debugPrint("📅 MONTHLY: $start → $end");
+
+      final raw = await ReportService.fetchChartSales(
+        storeId: auth.user.value!.tokoId!,
+        startDate: DateFormat('yyyy-MM-dd').format(start),
+        endDate: DateFormat('yyyy-MM-dd').format(end),
       );
-    });
-    selectedIndex = days - 1;
+
+      salesData = raw.map<SalesDay>((e) {
+        return SalesDay(
+          date: DateTime.parse(e['date']),
+          totalSales: e['total_sold'],
+          products: const [],
+        );
+      }).toList();
+
+      selectedIndex = salesData.isNotEmpty ? salesData.length - 1 : 0;
+    } catch (e) {
+      error = e.toString();
+      debugPrint("❌ LOAD MONTHLY FAILED: $e");
+    } finally {
+      loading = false;
+      setState(() {});
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final maxValue = salesData
-        .map((e) => e.totalSales)
-        .reduce((a, b) => a > b ? a : b);
-
-    final maxY = ((maxValue / 50).ceil() * 50).toDouble();
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFEEF3),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF87DAF),
-        title: const Text('Sales Report'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [_filterBar(), _chartCard(maxY), _reportSection()],
-      ),
-    );
-  }
-
-  Widget _filterBar() {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          _filterButton('7 Days', ChartMode.weekly),
-          const SizedBox(width: 8),
-          _filterButton('Monthly', ChartMode.monthly),
-          if (mode == ChartMode.monthly)
-            Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Text(
-                DateFormat('MMMM yyyy').format(selectedMonth),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterButton(String text, ChartMode value) {
-    final active = mode == value;
-    return GestureDetector(
-      onTap: () {
-        if (value == ChartMode.monthly) {
-          _showMonthPicker();
-        } else {
-          mode = ChartMode.weekly;
-          _loadWeekly();
-          setState(() {});
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? Colors.pink : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.black,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
+  // =========================
+  // UI HELPERS
+  // =========================
 
   void _showMonthPicker() {
     showModalBottomSheet(
@@ -140,9 +133,8 @@ class _ChartPageState extends State<ChartPage> {
             onTap: () {
               selectedMonth = month;
               mode = ChartMode.monthly;
-              _loadMonthly(month);
               Navigator.pop(context);
-              setState(() {});
+              _loadMonthly(month);
             },
             child: Container(
               alignment: Alignment.center,
@@ -150,7 +142,10 @@ class _ChartPageState extends State<ChartPage> {
                 color: Colors.pink.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(DateFormat('MMM').format(month)),
+              child: Text(
+                DateFormat('MMM').format(month),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           );
         },
@@ -158,9 +153,94 @@ class _ChartPageState extends State<ChartPage> {
     );
   }
 
+  // =========================
+  // BUILD
+  // =========================
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (error != null) {
+      return Scaffold(body: Center(child: Text(error!)));
+    }
+
+    if (salesData.isEmpty) {
+      return const Scaffold(body: Center(child: Text("NO SALES DATA")));
+    }
+
+    final maxValue =
+        salesData.map((e) => e.totalSales).reduce((a, b) => a > b ? a : b);
+
+    final maxY = ((maxValue / 10).ceil() * 10).toDouble();
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFEEF3),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF87DAF),
+        title: const Text('Sales Report'),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          _filterBar(),
+          _chartCard(maxY),
+          _reportSection(),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterBar() {
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          _filterButton('Weekly', ChartMode.weekly),
+          const SizedBox(width: 8),
+          _filterButton('Monthly', ChartMode.monthly),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterButton(String text, ChartMode value) {
+    final active = mode == value;
+
+    return GestureDetector(
+      onTap: () {
+        if (value == ChartMode.weekly) {
+          mode = ChartMode.weekly;
+          _loadWeekly();
+        } else {
+          _showMonthPicker();
+        }
+        setState(() {});
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? Colors.pink : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: active ? Colors.white : Colors.black,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _chartCard(double maxY) {
-    final barWidth = 14.0;
-    final spacing = 12.0;
+    final barWidth = 18.0;
+    final spacing = 16.0;
     final chartWidth = salesData.length * (barWidth + spacing) + 40;
 
     return Container(
@@ -170,9 +250,6 @@ class _ChartPageState extends State<ChartPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12),
-        ],
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -183,80 +260,40 @@ class _ChartPageState extends State<ChartPage> {
           child: BarChart(
             BarChartData(
               maxY: maxY,
-              alignment: BarChartAlignment.spaceBetween,
-              gridData: FlGridData(
-                show: true,
-                horizontalInterval: 50,
-                drawVerticalLine: false,
-              ),
               borderData: FlBorderData(show: false),
-
-              /// 🔥 HAPUS TITLE ATAS & KANAN
+              gridData: FlGridData(show: true),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    interval: 50,
                     reservedSize: 36,
-                    getTitlesWidget: (value, _) {
-                      return Text(
-                        value.toInt().toString(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                      );
-                    },
+                    getTitlesWidget: (v, _) =>
+                        Text(v.toInt().toString(), style: const TextStyle(fontSize: 10)),
                   ),
                 ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
                     getTitlesWidget: (value, _) {
-                      final index = value.toInt();
-                      if (index < 0 || index >= salesData.length) {
-                        return const SizedBox.shrink();
+                      final i = value.toInt();
+                      if (i < 0 || i >= salesData.length) {
+                        return const SizedBox();
                       }
-
-                      final date = salesData[index].date;
-
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          mode == ChartMode.weekly
-                              ? DateFormat('EEE').format(date)
-                              : date.day.toString(),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      return Text(
+                        salesData[i].date.day.toString(),
+                        style: const TextStyle(fontSize: 11),
                       );
                     },
                   ),
                 ),
               ),
-
-              barTouchData: BarTouchData(
-                touchCallback: (event, response) {
-                  if (response?.spot != null) {
-                    setState(() {
-                      selectedIndex = response!.spot!.touchedBarGroupIndex;
-                    });
-                  }
-                },
-              ),
-
               barGroups: List.generate(salesData.length, (i) {
                 return BarChartGroupData(
                   x: i,
-                  barsSpace: spacing,
                   barRods: [
                     BarChartRodData(
                       toY: salesData[i].totalSales.toDouble(),
@@ -285,16 +322,14 @@ class _ChartPageState extends State<ChartPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Sales Detail - ${DateFormat('dd MMM yyyy').format(day.date)}',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            const Text(
+              'Sales Detail',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
-            Expanded(
-              child: ListView.builder(
-                itemCount: day.products.length,
-                itemBuilder: (_, i) => ListTile(title: Text(day.products[i])),
-              ),
+            Text(
+              DateFormat('EEEE, dd MMM yyyy').format(day.date),
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -302,6 +337,10 @@ class _ChartPageState extends State<ChartPage> {
     );
   }
 }
+
+// =========================
+// MODEL
+// =========================
 
 class SalesDay {
   final DateTime date;

@@ -19,7 +19,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
   String? selectedCategory; // 'nendroid' | 'bags' | 'figure'
   String? selectedSeries; // 'onepiece' | 'jjk'
 
-  late Future<List<SoldProduct>> _futureBestSales;
+  Future<List<SoldProduct>>? _futureBestSales;
 
   @override
   void initState() {
@@ -31,15 +31,15 @@ class _BestSalesPageState extends State<BestSalesPage> {
     await auth.loadToken();
 
     if (auth.token.value.isEmpty) {
-      throw Exception('TOKEN KOSONG');
+      return [];
     }
 
     final storeId = auth.user.value?.tokoId;
     if (storeId == null) {
-      throw Exception('STORE ID TIDAK ADA');
+      return [];
     }
 
-    final data = await ReportService.fetchSales(
+    final data = await ReportService.fetchProductSales(
       storeId: storeId,
       order: selectedOrder,
       category: selectedCategory,
@@ -54,6 +54,8 @@ class _BestSalesPageState extends State<BestSalesPage> {
       if (order != null) selectedOrder = order;
       if (category != null) selectedCategory = category;
       if (series != null) selectedSeries = series;
+
+      // reload data
       _futureBestSales = _loadBestSales();
     });
   }
@@ -84,7 +86,6 @@ class _BestSalesPageState extends State<BestSalesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== ORDER =====
           Wrap(
             spacing: 8,
             children: [
@@ -102,7 +103,6 @@ class _BestSalesPageState extends State<BestSalesPage> {
           ),
           const SizedBox(height: 8),
 
-          // ===== CATEGORY =====
           Wrap(
             spacing: 8,
             children: [
@@ -125,7 +125,6 @@ class _BestSalesPageState extends State<BestSalesPage> {
           ),
           const SizedBox(height: 8),
 
-          // ===== SERIES =====
           Wrap(
             spacing: 8,
             children: [
@@ -149,6 +148,10 @@ class _BestSalesPageState extends State<BestSalesPage> {
   // ================= CONTENT =================
 
   Widget _content() {
+    if (_futureBestSales == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return FutureBuilder<List<SoldProduct>>(
       future: _futureBestSales,
       builder: (context, snapshot) {
@@ -161,12 +164,13 @@ class _BestSalesPageState extends State<BestSalesPage> {
             child: Text(
               snapshot.error.toString(),
               style: const TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
             ),
           );
         }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        final products = snapshot.data ?? [];
+
+        if (products.isEmpty) {
           return const Center(
             child: Text(
               'Belum ada data penjualan',
@@ -175,7 +179,6 @@ class _BestSalesPageState extends State<BestSalesPage> {
           );
         }
 
-        final products = snapshot.data!;
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: products.length,
@@ -212,7 +215,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
               color: Colors.pink.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.shopping_bag, color: Colors.pink, size: 32),
+            child: const Icon(Icons.shopping_bag, color: Colors.pink),
           ),
           const SizedBox(width: 16),
           Expanded(

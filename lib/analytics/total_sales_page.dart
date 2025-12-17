@@ -42,7 +42,7 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
     debugPrint("🏪 storeId = $storeId");
     debugPrint("🔐 token = ${auth.token.value}");
 
-    final data = await ReportService.fetchSales(storeId: storeId);
+    final data = await ReportService.fetchProductSales(storeId: storeId);
 
     debugPrint("✅ DATA RECEIVED: ${data.length}");
 

@@ -15,11 +15,11 @@ class SoldProduct {
 
   factory SoldProduct.fromJson(Map<String, dynamic> json) {
     return SoldProduct(
-      name: json['product_name'],
-      category: json['category'],
-      series: json['series'],
-      sold: json['total_sold'],
-      revenue: json['total_revenue'],
+      name: json['product_name'] ?? '',
+      category: json['category'] ?? '',
+      series: json['series'] ?? '',
+      sold: int.parse(json['total_sold'].toString()),
+      revenue: int.parse(json['total_revenue'].toString()),
     );
   }
 }
