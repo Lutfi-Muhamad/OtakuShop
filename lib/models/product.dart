@@ -6,7 +6,8 @@ class Product {
       imageType,
       aspectRatio,
       storeName,
-      storeAddress;
+      storeAddress,
+      series; // 🔥 Tambah field series
   final int? price;
   final List<String> images;
 
@@ -23,6 +24,7 @@ class Product {
     this.storeId = 0,
     this.storeName = '',
     this.storeAddress = '',
+    this.series = '', // Default empty
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class Product {
       storeId: json['toko_id'] ?? json['store_id'] ?? 0,
 
       // Ambil info toko jika ada (nested object 'store' atau flat field)
+      // 🔥 FIX: Cek apakah json['store'] adalah Map agar tidak crash jika backend kirim []
       storeName:
           (json['store'] is Map ? json['store']['name']?.toString() : null) ??
           json['store_name']?.toString() ??
@@ -55,6 +58,11 @@ class Product {
           json['store_address']?.toString() ??
           '',
 
+      // 🔥 Ambil series dari folder
+      series: json['folder']?.toString() ?? 'general',
+
+      // Cek null sebelum parsing List
+      // 🔥 FIX: Pastikan elemen list dikonversi ke String dan filter null
       images: json['images'] != null
           ? (json['images'] as List).map((e) => e?.toString() ?? '').toList()
           : [],

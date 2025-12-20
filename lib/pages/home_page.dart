@@ -16,8 +16,9 @@ class HomeController extends GetxController {
   var productList = <Product>[].obs;
   var searchQuery = "".obs;
   var errorMessage = "".obs;
-  var selectedCategory = "All".obs; // 🔥 State untuk kategori
-
+  var selectedCategory = "All".obs;
+  var selectedSeries = "All".obs;
+  var sortPrice = "none".obs;
   @override
   void onInit() {
     super.onInit();
@@ -51,6 +52,15 @@ class HomeController extends GetxController {
           .toList();
     }
 
+    // 2. Filter Series
+    if (selectedSeries.value != "All") {
+      list = list
+          .where(
+            (p) => p.series.toLowerCase() == selectedSeries.value.toLowerCase(),
+          )
+          .toList();
+    }
+
     // 2. Filter Search
     if (searchQuery.value.isNotEmpty) {
       list = list
@@ -61,10 +71,19 @@ class HomeController extends GetxController {
           .toList();
     }
 
+    // 3. Sort Price
+    if (sortPrice.value == 'asc') {
+      list.sort((a, b) => (a.price ?? 0).compareTo(b.price ?? 0));
+    } else if (sortPrice.value == 'desc') {
+      list.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+    }
+
     return list;
   }
 
   void selectCategory(String category) => selectedCategory.value = category;
+  void selectSeries(String series) => selectedSeries.value = series;
+  void setSortPrice(String sort) => sortPrice.value = sort;
 }
 
 class HomePage extends StatelessWidget {
@@ -75,13 +94,12 @@ class HomePage extends StatelessWidget {
     final controller = Get.put(HomeController());
 
     return Scaffold(
-      drawer: const AppDrawer(), // ← WAJIB di Scaffold utama
+      drawer: const AppDrawer(),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // 🔥 TAMBAHKAN INI: Cek Error sebelum Cek Data Kosong
         if (controller.errorMessage.value.isNotEmpty) {
           return Center(
             child: Padding(
@@ -102,7 +120,10 @@ class HomePage extends StatelessWidget {
         final products = controller.filteredProducts;
 
         final squares = products.where((p) => p.imageType == "square").toList();
-        final wides = products.where((p) => p.imageType == "wide").toList();
+
+        // 🔥 Sort Wides (Trending) by ID Descending (Newest First)
+        final wides = products.where((p) => p.imageType == "wide").toList()
+          ..sort((a, b) => b.id.compareTo(a.id));
 
         // 🔥 WRAP DENGAN REFRESH INDICATOR
         return RefreshIndicator(
@@ -148,26 +169,41 @@ class HomePage extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 20),
-                    _buildCategories(controller), // 🔥 Pass controller
+                    _buildCategories(controller),
                     const SizedBox(height: 10),
-                    _buildFilters(),
+                    _buildFilters(
+                      context,
+                      controller,
+                    ), // 🔥 Pass context & controller
                     const SizedBox(height: 20),
 
                     // GRID PRODUK (SQUARE)
                     ProductGrid(products: squares),
 
-                    const SizedBox(height: 30),
+                    // 🔥 SEPARATOR SEBELUM TRENDING
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 20,
+                        horizontal: 20,
+                      ),
+                      child: Divider(thickness: 1.5),
+                    ),
 
                     // TRENDING (WIDE)
                     if (wides.isNotEmpty) _buildTrending(wides.first),
 
-                    const SizedBox(height: 20),
+                    // 🔥 SEPARATOR SETELAH TRENDING
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 30,
+                        horizontal: 20,
+                      ),
+                      child: Divider(thickness: 1.5),
+                    ),
 
-                    // LIST BAWAH
+                    // LIST BAWAH (Jika masih diperlukan, jika tidak bisa dihapus)
                     ProductGrid(products: squares),
 
-                    const SizedBox(height: 50),
-                    _buildSeriesButton(),
                     const SizedBox(height: 50),
                     const FooterWidget(),
                   ],
@@ -248,15 +284,124 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildFilters() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Icon(Icons.filter_list),
-          SizedBox(width: 5),
-          Text("Filters"),
-        ],
+  Widget _buildFilters(BuildContext context, HomeController controller) {
+    return GestureDetector(
+      onTap: () {
+        // 🔥 Tampilkan BottomSheet Filter
+        showModalBottomSheet(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Filter Series",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  children: [
+                    _filterChip(controller, "All", "All", isSeries: true),
+                    _filterChip(
+                      controller,
+                      "One Piece",
+                      "onepiece",
+                      isSeries: true,
+                    ),
+                    _filterChip(
+                      controller,
+                      "Jujutsu Kaisen",
+                      "jjk",
+                      isSeries: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Urutkan Harga",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 10,
+                  children: [
+                    _filterChip(controller, "Default", "none", isSeries: false),
+                    _filterChip(controller, "Termurah", "asc", isSeries: false),
+                    _filterChip(
+                      controller,
+                      "Termahal",
+                      "desc",
+                      isSeries: false,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            const Icon(Icons.filter_list),
+            const SizedBox(width: 5),
+            Obx(
+              () => Text(
+                "Filters ${controller.selectedSeries.value != 'All' || controller.sortPrice.value != 'none' ? '• Aktif' : ''}",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color:
+                      controller.selectedSeries.value != 'All' ||
+                          controller.sortPrice.value != 'none'
+                      ? Colors.pink
+                      : Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _filterChip(
+    HomeController controller,
+    String label,
+    String value, {
+    required bool isSeries,
+  }) {
+    return Obx(
+      () => ChoiceChip(
+        label: Text(label),
+        selected: isSeries
+            ? controller.selectedSeries.value == value
+            : controller.sortPrice.value == value,
+        onSelected: (selected) {
+          if (selected) {
+            if (isSeries)
+              controller.selectSeries(value);
+            else
+              controller.setSortPrice(value);
+            Get.back(); // Tutup bottom sheet setelah pilih
+          }
+        },
+        selectedColor: Colors.pinkAccent,
+        labelStyle: TextStyle(
+          color:
+              (isSeries
+                  ? controller.selectedSeries.value == value
+                  : controller.sortPrice.value == value)
+              ? Colors.white
+              : Colors.black,
+        ),
       ),
     );
   }
@@ -264,18 +409,30 @@ class HomePage extends StatelessWidget {
   // ==================== TRENDING (WIDE) ====================
   Widget _buildTrending(Product p) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: EdgeInsets.all(8),
-          child: Text(
-            "Trending",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          width: double.infinity,
+          color: Colors.orange.shade50,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          child: Row(
+            children: [
+              const Icon(Icons.whatshot, color: Colors.orange),
+              const SizedBox(width: 8),
+              Text(
+                "Trending Now",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.orange.shade900,
+                ),
+              ),
+            ],
           ),
         ),
+        const SizedBox(height: 10),
         GestureDetector(
-          onTap: () {
-            // jika mau klik trending -> promo juga bisa
-          },
+          onTap: () => Get.to(() => PromoPage()),
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: Container(
@@ -302,17 +459,6 @@ class HomePage extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSeriesButton() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 50),
-      decoration: BoxDecoration(
-        color: Colors.red,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text("Series", style: TextStyle(color: Colors.white)),
     );
   }
 }
