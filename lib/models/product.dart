@@ -42,7 +42,6 @@ class Product {
       storeId: json['toko_id'] ?? json['store_id'] ?? 0,
 
       // Ambil info toko jika ada (nested object 'store' atau flat field)
-      // 🔥 FIX: Cek apakah json['store'] adalah Map agar tidak crash jika backend kirim []
       storeName:
           (json['store'] is Map ? json['store']['name']?.toString() : null) ??
           json['store_name']?.toString() ??
@@ -56,8 +55,6 @@ class Product {
           json['store_address']?.toString() ??
           '',
 
-      // Cek null sebelum parsing List
-      // 🔥 FIX: Pastikan elemen list dikonversi ke String dan filter null
       images: json['images'] != null
           ? (json['images'] as List).map((e) => e?.toString() ?? '').toList()
           : [],
