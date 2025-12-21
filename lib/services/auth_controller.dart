@@ -13,7 +13,7 @@ class AuthController extends GetxController {
   final user = Rxn<User>();
 
   static const String baseUrl =
-      'https://dreamlessly-apophonic-braylee.ngrok-free.dev/api';
+      'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
 
   @override
   void onInit() {

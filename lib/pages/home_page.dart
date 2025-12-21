@@ -7,6 +7,7 @@ import 'package:otakushop/common/navbar.dart';
 import 'package:otakushop/common/searchbar.dart';
 import 'package:otakushop/common/product_grid.dart';
 import 'package:otakushop/pages/promo_page.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 import '../models/product.dart';
 import '../services/product_service.dart';
@@ -118,6 +119,12 @@ class HomePage extends StatelessWidget {
 
         // 🔥 LOGIC SEARCH FILTER
         final products = controller.filteredProducts;
+        // 🔥 Pisahkan produk berdasarkan imageType promo
+        final promos =
+            products
+                .where((p) => p.imageType == "promo" && p.images.isNotEmpty)
+                .toList()
+              ..sort((a, b) => b.id.compareTo(a.id));
 
         final squares = products.where((p) => p.imageType == "square").toList();
 
@@ -158,15 +165,16 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // PROMO BANNER
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => PromoPage()),
-                        );
-                      },
-                      child: _buildBannerPromo(),
-                    ),
+                    if (promos.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => PromoPage()),
+                          );
+                        },
+                        child: _buildBannerPromo(promos.first),
+                      ),
 
                     const SizedBox(height: 20),
                     _buildCategories(controller),
@@ -217,22 +225,33 @@ class HomePage extends StatelessWidget {
   }
 
   // ==================== PROMO ====================
-  Widget _buildBannerPromo() {
+  Widget _buildBannerPromo(Product promo) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      height: 150,
-      decoration: BoxDecoration(
-        color: Colors.red,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Text(
-          "Luffy 50% Off",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+        child: CarouselSlider(
+          options: CarouselOptions(
+            aspectRatio: promo.ratioDouble, // 16:9 dari backend
+            viewportFraction: 1.0,
+            autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 4),
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            enlargeCenterPage: false,
           ),
+          items: promo.images.map((url) {
+            return Image.network(
+              url,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              loadingBuilder: (c, child, progress) {
+                if (progress == null) return child;
+                return const Center(child: CircularProgressIndicator());
+              },
+              errorBuilder: (_, __, ___) =>
+                  const Center(child: Icon(Icons.broken_image)),
+            );
+          }).toList(),
         ),
       ),
     );
