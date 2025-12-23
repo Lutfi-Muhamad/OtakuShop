@@ -1,16 +1,39 @@
-# otakushop
+# Otaku Shop
 
-A new Flutter project.
+Otaku Shop adalah aplikasi mobile berbasis **Flutter** dengan tema toko anime.  
+Aplikasi ini dibuat untuk memenuhi tugas **Ujian Akhir Semester (UAS) Pemrograman Sistem Mobile**.
 
-## Getting Started
+Project ini menerapkan konsep dasar pengembangan aplikasi mobile, termasuk navigasi halaman, autentikasi sederhana, pengelolaan state menggunakan GetX, serta penggunaan API dan penyimpanan lokal.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🎯 Tujuan Project
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Menerapkan konsep pemrograman sistem mobile menggunakan Flutter
+- Memahami alur build aplikasi Android hingga menjadi file APK
+- Mengimplementasikan state management dan routing menggunakan GetX
+- Mengelola permission Android (internet, kamera, storage)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## ✨ Fitur Aplikasi
+
+- Halaman login
+- Halaman beranda (home)
+- Halaman profil pengguna
+- Pengambilan gambar menggunakan kamera atau galeri
+- Penyimpanan data sederhana secara lokal
+- Navigasi dan state management menggunakan GetX
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+- Flutter
+- Dart
+- GetX
+- HTTP
+- Shared Preferences
+- Image Picker
+
+---
