@@ -12,7 +12,7 @@ Project ini menerapkan konsep dasar pengembangan aplikasi mobile, termasuk navig
 - Menerapkan konsep pemrograman sistem mobile menggunakan Flutter
 - Memahami alur build aplikasi Android hingga menjadi file APK
 - Mengimplementasikan state management dan routing menggunakan GetX
-- Mengelola permission Android (internet, kamera, storage)
+- Mengelola permission Android (internet, storage)
 
 ---
 
@@ -21,8 +21,8 @@ Project ini menerapkan konsep dasar pengembangan aplikasi mobile, termasuk navig
 - Halaman login
 - Halaman beranda (home)
 - Halaman profil pengguna
-- Pengambilan gambar menggunakan kamera atau galeri
-- Penyimpanan data sederhana secara lokal
+- Pengambilan gambar menggunakan galeri
+- Penyimpanan data sederhana menggunakan server API Laravel
 - Navigasi dan state management menggunakan GetX
 
 ---
