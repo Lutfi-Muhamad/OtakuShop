@@ -13,7 +13,9 @@ class AuthController extends GetxController {
   final user = Rxn<User>();
 
   static const String baseUrl =
-      'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
+      // 'https://hubbly-salma-unmaterialistically.ngrok-free.dev/api';
+      "https://vonnie-covenantal-multiaxially.ngrok-free.dev/api";
+      // "http://192.168.1.7:8000/api";
 
   @override
   void onInit() {
