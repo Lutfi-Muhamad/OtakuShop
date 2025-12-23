@@ -7,7 +7,7 @@ class Product {
       aspectRatio,
       storeName,
       storeAddress,
-      series; // 🔥 Tambah field series
+      series;
   final int? price;
   final List<String> images;
 
@@ -24,7 +24,7 @@ class Product {
     this.storeId = 0,
     this.storeName = '',
     this.storeAddress = '',
-    this.series = '', // Default empty
+    this.series = '',
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -32,12 +32,10 @@ class Product {
       id: json['id'] ?? 0,
       name: json['name']?.toString() ?? 'No Name',
       description: json['description']?.toString() ?? '',
-      // Handle price jika string atau int
       price: json['price'] is int
           ? json['price']
           : int.tryParse(json['price']?.toString() ?? '0'),
       category: json['category']?.toString() ?? 'General',
-      // Handle stock jika string atau int
       stock: json['stock'] is int
           ? json['stock']
           : int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
@@ -83,5 +81,24 @@ class Product {
       }
     }
     return 1.0;
+  }
+
+  // 🔥 TO JSON (Untuk Wishlist / Local Storage)
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'price': price,
+      'category': category,
+      'stock': stock,
+      'toko_id': storeId,
+      'store_name': storeName,
+      'store_address': storeAddress,
+      'folder': series,
+      'images': images,
+      'image_type': imageType,
+      'aspect_ratio': aspectRatio,
+    };
   }
 }

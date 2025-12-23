@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:get/get.dart';
-import 'package:otakushop/pages/login_page.dart';
-import 'package:otakushop/services/cart_service.dart';
-import 'package:otakushop/services/auth_controller.dart';
+import '../pages/login_page.dart';
+import '../services/cart_service.dart';
+import '../services/auth_controller.dart';
 import '../models/product.dart';
+import '../services/wishlist_controller.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final Product product;
@@ -22,9 +23,24 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
+    final wishlistController = Get.put(WishlistController());
 
     return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
+      appBar: AppBar(
+        title: Text(product.name),
+        actions: [
+          Obx(() {
+            final isWishlisted = wishlistController.isWishlisted(product.id);
+            return IconButton(
+              icon: Icon(
+                isWishlisted ? Icons.favorite : Icons.favorite_border,
+                color: isWishlisted ? Colors.pink : Colors.black,
+              ),
+              onPressed: () => wishlistController.toggleWishlist(product),
+            );
+          }),
+        ],
+      ),
       body: Column(
         children: [
           // =========================

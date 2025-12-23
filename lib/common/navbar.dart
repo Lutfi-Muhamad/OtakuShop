@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:otakushop/pages/home_page.dart';
 import 'package:otakushop/seller/user_profile_page.dart';
 import 'package:otakushop/services/cart_service.dart';
 import 'package:otakushop/services/auth_controller.dart';

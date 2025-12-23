@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:otakushop/common/drawer_widget.dart';
-import 'package:otakushop/common/footer.dart.dart';
-import 'package:otakushop/common/navbar.dart';
-import 'package:otakushop/common/searchbar.dart';
-import 'package:otakushop/common/product_grid.dart';
-import 'package:otakushop/pages/promo_page.dart';
+import '../common/drawer_widget.dart';
+import '../common/footer.dart.dart';
+import '../common/navbar.dart';
+import '../common/searchbar.dart';
+import '../common/product_grid.dart';
+import '../pages/promo_page.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 import '../models/product.dart';
