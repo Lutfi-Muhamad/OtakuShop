@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:otakushop/services/auth_controller.dart';
-import 'package:otakushop/models/sold_products.dart';
-import 'package:otakushop/services/report_service.dart';
+import '../services/auth_controller.dart';
+import '../models/sold_products.dart';
+import '../services/report_service.dart';
 
 class TotalSalesPage extends StatefulWidget {
   const TotalSalesPage({super.key});
@@ -51,16 +51,23 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFFF7FAF),
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFFF7FAF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF7FAF),
+        backgroundColor: isDark
+            ? Theme.of(context).appBarTheme.backgroundColor
+            : const Color(0xFFFF7FAF),
         elevation: 0,
         title: Text(
           selectedCategory == null
               ? "Total Sales"
               : "Kategori: $selectedCategory",
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
         ),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
       ),
       body: FutureBuilder<List<SoldProduct>>(
         future: _futureSales,
@@ -73,7 +80,7 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
             return Center(
               child: Text(
                 snapshot.error.toString(),
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
                 textAlign: TextAlign.center,
               ),
             );
@@ -81,18 +88,62 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-              child: Text(
-                "Belum ada produk yang terjual",
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text("Belum ada produk yang terjual", style: TextStyle()),
             );
           }
 
           final products = snapshot.data!;
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: products.length,
-            itemBuilder: (_, i) => _productCard(products[i]),
+
+          // 🔥 HITUNG GRAND TOTAL
+          int grandTotal = 0;
+          for (var p in products) {
+            grandTotal += p.revenue;
+          }
+
+          return Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: products.length,
+                  itemBuilder: (_, i) => _productCard(products[i]),
+                ),
+              ),
+              // 🔥 TOTAL PENDAPATAN DI BAWAH
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Total Pendapatan",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "IDR $grandTotal",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -100,11 +151,14 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
   }
 
   Widget _productCard(SoldProduct product) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final harga = product.sold > 0 ? product.revenue ~/ product.sold : 0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -113,7 +167,9 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.pink.shade50,
+              color: isDark
+                  ? Theme.of(context).colorScheme.surfaceVariant
+                  : Colors.pink.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.shopping_bag, color: Colors.pink, size: 30),
@@ -128,9 +184,21 @@ class _TotalSalesPageState extends State<TotalSalesPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
-                Text(product.category),
+                Text("${product.category} • IDR $harga"),
                 const SizedBox(height: 4),
-                Text("Terjual x${product.sold}"),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Terjual x${product.sold}"),
+                    Text(
+                      "Total: IDR ${product.revenue}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

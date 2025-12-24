@@ -6,28 +6,21 @@ import 'package:get/get.dart';
 import '../services/cart_service.dart';
 import '../pages/home_page.dart'; // Import HomeController
 
-class CartPage extends StatefulWidget {
-  const CartPage({super.key});
-
-  @override
-  State<CartPage> createState() => _CartPageState();
-}
-
-class _CartPageState extends State<CartPage> {
+class CartPageLogicController extends GetxController {
   static String get baseUrl => AuthController.baseUrl;
   final auth = Get.find<AuthController>();
-  List carts = [];
-  bool isLoading = true;
+  var carts = [].obs;
+  var isLoading = true.obs;
 
   @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
     checkAuth();
   }
 
   void checkAuth() {
     if (auth.token.value.isEmpty) {
-      Get.offAllNamed('/login');
+      // Get.offAllNamed('/login')
     } else {
       fetchCart();
     }
@@ -37,7 +30,7 @@ class _CartPageState extends State<CartPage> {
   // GET CART FROM API
   // =========================
   Future<void> fetchCart() async {
-    setState(() => isLoading = true);
+    isLoading.value = true;
 
     final res = await http.get(
       Uri.parse("$baseUrl/cart"),
@@ -46,15 +39,13 @@ class _CartPageState extends State<CartPage> {
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
-      setState(() {
-        carts = data['carts'] ?? [];
-        isLoading = false;
-      });
+      carts.assignAll(data['carts'] ?? []);
+      isLoading.value = false;
     } else if (res.statusCode == 401) {
       await auth.logout();
       Get.offAllNamed('/login');
     } else {
-      setState(() => isLoading = false);
+      isLoading.value = false;
     }
   }
 
@@ -87,168 +78,183 @@ class _CartPageState extends State<CartPage> {
     }
   }
 
+  // =========================
+  // CHECKOUT
+  // =========================
+  Future<void> checkout() async {
+    final res = await http.post(
+      Uri.parse("$baseUrl/cart/checkout"),
+      headers: auth.headers(json: false),
+    );
+
+    debugPrint("🧾 CHECKOUT STATUS: ${res.statusCode}");
+    debugPrint("🧾 RESPONSE: ${res.body}");
+
+    if (res.statusCode == 200) {
+      fetchCart();
+
+      // Update notifikasi navbar (jadi 0)
+      if (Get.isRegistered<CartController>()) {
+        Get.find<CartController>().fetchCartCount();
+      }
+
+      // 🔥 REFRESH STOK DI HOME & REDIRECT
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().fetchProducts();
+      }
+
+      Get.snackbar(
+        "Sukses",
+        "Checkout sukses",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      Get.offAllNamed('/'); // Kembali ke Home
+    } else {
+      Get.snackbar(
+        "Gagal",
+        jsonDecode(res.body)['message'] ?? "Terjadi kesalahan",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+}
+
+class CartPage extends StatelessWidget {
+  const CartPage({super.key});
+
   @override
   Widget build(BuildContext context) {
-    int total = 0;
-
-    for (var cart in carts) {
-      final price = cart['product']['price'] ?? 0;
-      final qty = cart['qty'] ?? 0;
-      total += (price as int) * (qty as int);
-    }
+    final controller = Get.put(CartPageLogicController());
 
     return Scaffold(
       appBar: AppBar(title: const Text("Kersanjang")),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : carts.isEmpty
-          ? const Center(child: Text("Keranjang kosong"))
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: carts.length,
-                      itemBuilder: (context, index) {
-                        final cart = carts[index];
-                        final product = cart['product'];
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                // ✅ AMAN: PAKAI product['image']
-                                Image.network(
-                                  product['image'],
-                                  width: 80,
-                                  errorBuilder: (c, e, s) =>
-                                      const Icon(Icons.broken_image, size: 50),
-                                ),
-                                const SizedBox(width: 12),
+        if (controller.carts.isEmpty) {
+          return const Center(child: Text("Keranjang kosong"));
+        }
 
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+        int total = 0;
+        for (var cart in controller.carts) {
+          final price = cart['product']['price'] ?? 0;
+          final qty = cart['qty'] ?? 0;
+          total += (price as int) * (qty as int);
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: controller.carts.length,
+                  itemBuilder: (context, index) {
+                    final cart = controller.carts[index];
+                    final product = cart['product'];
+
+                    return Card(
+                      color: Theme.of(context).cardColor,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            // ✅ AMAN: PAKAI product['image']
+                            Image.network(
+                              product['image'],
+                              width: 80,
+                              errorBuilder: (c, e, s) =>
+                                  const Icon(Icons.broken_image, size: 50),
+                            ),
+                            const SizedBox(width: 12),
+
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    product['name'],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text("Rp ${product['price']}"),
+
+                                  Row(
                                     children: [
-                                      Text(
-                                        product['name'],
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      IconButton(
+                                        icon: const Icon(Icons.remove),
+                                        onPressed: () {
+                                          if (cart['qty'] > 1) {
+                                            controller.updateQty(
+                                              cart['id'],
+                                              cart['qty'] - 1,
+                                            );
+                                          }
+                                        },
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text("Rp ${product['price']}"),
-
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.remove),
-                                            onPressed: () {
-                                              if (cart['qty'] > 1) {
-                                                updateQty(
-                                                  cart['id'],
-                                                  cart['qty'] - 1,
-                                                );
-                                              }
-                                            },
-                                          ),
-                                          Text(cart['qty'].toString()),
-                                          IconButton(
-                                            icon: const Icon(Icons.add),
-                                            onPressed: () {
-                                              updateQty(
-                                                cart['id'],
-                                                cart['qty'] + 1,
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              deleteCart(cart['id']);
-                                            },
-                                          ),
-                                        ],
+                                      Text(cart['qty'].toString()),
+                                      IconButton(
+                                        icon: const Icon(Icons.add),
+                                        onPressed: () {
+                                          controller.updateQty(
+                                            cart['id'],
+                                            cart['qty'] + 1,
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          controller.deleteCart(cart['id']);
+                                        },
                                       ),
                                     ],
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // =========================
-                  // TOTAL & CHECKOUT
-                  // =========================
-                  Text(
-                    "Total: Rp $total",
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final res = await http.post(
-                          Uri.parse("$baseUrl/cart/checkout"),
-                          headers: auth.headers(json: false),
-                        );
-
-                        debugPrint("🧾 CHECKOUT STATUS: ${res.statusCode}");
-                        debugPrint("🧾 RESPONSE: ${res.body}");
-
-                        if (res.statusCode == 200) {
-                          fetchCart();
-
-                          // Update notifikasi navbar (jadi 0)
-                          if (Get.isRegistered<CartController>()) {
-                            Get.find<CartController>().fetchCartCount();
-                          }
-
-                          // 🔥 REFRESH STOK DI HOME & REDIRECT
-                          if (Get.isRegistered<HomeController>()) {
-                            Get.find<HomeController>().fetchProducts();
-                          }
-
-                          Get.snackbar(
-                            "Sukses",
-                            "Checkout sukses",
-                            backgroundColor: Colors.green,
-                            colorText: Colors.white,
-                          );
-                          Get.offAllNamed('/'); // Kembali ke Home
-                        } else {
-                          Get.snackbar(
-                            "Gagal",
-                            jsonDecode(res.body)['message'] ??
-                                "Terjadi kesalahan",
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                        }
-                      },
-                      child: const Text("Checkout"),
-                    ),
-                  ),
-                ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
+
+              // =========================
+              // TOTAL & CHECKOUT
+              // =========================
+              Text(
+                "Total: Rp $total",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: controller.checkout,
+                  child: const Text("Checkout"),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

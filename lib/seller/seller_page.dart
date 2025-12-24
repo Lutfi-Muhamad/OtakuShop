@@ -8,26 +8,21 @@ import 'package:otakushop/seller/edit_seller_page.dart';
 import 'add_product_page.dart';
 import 'package:get/get.dart';
 
-class SellerPage extends StatefulWidget {
-  const SellerPage({super.key});
-
-  @override
-  State<SellerPage> createState() => _SellerPageState();
-}
-
-class _SellerPageState extends State<SellerPage> {
+class SellerController extends GetxController {
   final AuthController auth = Get.find<AuthController>();
   final SellerProductService productService = SellerProductService();
 
-  List<dynamic> myProducts = [];
-  bool loading = false;
+  var myProducts = <dynamic>[].obs;
+  var loading = false.obs;
   int? lastFetchedTokoId;
 
   @override
-  @override
-  void initState() {
-    super.initState();
+  void onInit() {
+    super.onInit();
+    _initLoad();
+  }
 
+  void _initLoad() {
     // 🔥 FETCH PERTAMA KALI
     final tokoId = auth.user.value?.tokoId;
     print("🚀 INIT SELLER | tokoId = $tokoId");
@@ -52,36 +47,59 @@ class _SellerPageState extends State<SellerPage> {
   Future<void> fetchProducts(int tokoId) async {
     print("📦 FETCH PRODUCTS START | tokoId = $tokoId");
 
-    setState(() => loading = true);
+    loading.value = true;
 
     try {
       final products = await productService.getProductsByToko(tokoId);
-
-      if (!mounted) return;
-
-      setState(() {
-        myProducts = products;
-      });
-
+      myProducts.assignAll(products);
       print("📦 FETCH SUCCESS | total = ${products.length}");
     } catch (e) {
       print("❌ FETCH ERROR: $e");
     } finally {
-      if (mounted) {
-        setState(() => loading = false);
-      }
+      loading.value = false;
       print("📦 FETCH END | loading = false");
     }
   }
 
+  Future<void> deleteProduct(int productId) async {
+    try {
+      final result = await productService.deleteProduct(productId);
+      if (result) {
+        myProducts.removeWhere((p) => p["id"] == productId);
+        Get.snackbar(
+          "Sukses",
+          "Produk berhasil dihapus",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+}
+
+class SellerPage extends StatelessWidget {
+  const SellerPage({super.key});
+
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(SellerController());
+    final auth = Get.find<AuthController>();
+
     return Scaffold(
       drawer: const AppDrawer(),
-      backgroundColor: Colors.white,
+      //backgroundColor: Colors.white,
       body: SafeArea(
         child: Obx(() {
           final tokoId = auth.user.value?.tokoId;
+          final loading = controller.loading.value;
+          final myProducts = controller.myProducts;
 
           print("🛒 SELLER BUILD | tokoId = $tokoId");
 
@@ -111,7 +129,7 @@ class _SellerPageState extends State<SellerPage> {
                 // ================= STATE HANDLING =================
 
                 // LOADING
-                if (loading)
+                if (loading && myProducts.isEmpty)
                   const Center(
                     child: CircularProgressIndicator(color: Colors.pinkAccent),
                   ),
@@ -169,6 +187,7 @@ class _SellerPageState extends State<SellerPage> {
                       children: List.generate(myProducts.length, (i) {
                         final p = myProducts[i];
                         return productCard(
+                          controller,
                           context,
                           p["name"] ?? "",
                           "IDR ${p['price']}",
@@ -191,13 +210,11 @@ class _SellerPageState extends State<SellerPage> {
         backgroundColor: Colors.pinkAccent,
         shape: const CircleBorder(),
         onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddProductPage()),
-          );
+          // Menggunakan Get.to dan menunggu result
+          final result = await Get.to(() => const AddProductPage());
 
           if (result == true && auth.user.value?.tokoId != null) {
-            fetchProducts(auth.user.value!.tokoId!);
+            controller.fetchProducts(auth.user.value!.tokoId!);
           }
         },
         child: const Icon(Icons.add, size: 35, color: Colors.white),
@@ -210,12 +227,14 @@ class _SellerPageState extends State<SellerPage> {
   // ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
 
   Widget productCard(
+    SellerController controller,
     BuildContext context,
     String title,
     String price,
     String imgUrl,
     int productId,
   ) {
+    final auth = Get.find<AuthController>();
     return SizedBox(
       height: 260, // ⬅️ WAJIB: constraint untuk GridView
       child: Column(
@@ -277,19 +296,16 @@ class _SellerPageState extends State<SellerPage> {
                   debugPrint("📦 productId = $productId");
                   debugPrint("🏪 tokoId = ${auth.user.value?.tokoId}");
 
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditSellerPage(
-                        productId: productId,
-                        storeId: auth.user.value!.tokoId!,
-                      ),
+                  final result = await Get.to(
+                    () => EditSellerPage(
+                      productId: productId,
+                      storeId: auth.user.value!.tokoId!,
                     ),
                   );
 
                   // 🔥 REFRESH JIKA BERHASIL EDIT
                   if (result == true && auth.user.value?.tokoId != null) {
-                    fetchProducts(auth.user.value!.tokoId!);
+                    controller.fetchProducts(auth.user.value!.tokoId!);
                   }
                 },
                 child: const Icon(Icons.edit, size: 18, color: Colors.blue),
@@ -303,7 +319,6 @@ class _SellerPageState extends State<SellerPage> {
                   showDialog(
                     context: context,
                     builder: (_) => AlertDialog(
-                      backgroundColor: Colors.white,
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -335,39 +350,9 @@ class _SellerPageState extends State<SellerPage> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: GestureDetector(
-                                  onTap: () async {
+                                  onTap: () {
                                     Navigator.pop(context);
-
-                                    debugPrint("🧨 DELETE CLICKED");
-                                    debugPrint("🧨 PRODUCT ID = $productId");
-                                    debugPrint(
-                                      "🧨 TOKEN = ${auth.token.value}",
-                                    );
-
-                                    try {
-                                      final result = await productService
-                                          .deleteProduct(productId);
-
-                                      debugPrint("🧨 DELETE RESULT = $result");
-
-                                      setState(() {
-                                        myProducts.removeWhere(
-                                          (p) => p["id"] == productId,
-                                        );
-                                      });
-
-                                      debugPrint(
-                                        "🧨 LOCAL LIST UPDATED | sisa = ${myProducts.length}",
-                                      );
-                                    } catch (e) {
-                                      debugPrint("❌ DELETE ERROR = $e");
-                                      Get.snackbar(
-                                        "Error",
-                                        e.toString(),
-                                        backgroundColor: Colors.red,
-                                        colorText: Colors.white,
-                                      );
-                                    }
+                                    controller.deleteProduct(productId);
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(

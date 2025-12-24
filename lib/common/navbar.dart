@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:otakushop/seller/user_profile_page.dart';
-import 'package:otakushop/services/cart_service.dart';
-import 'package:otakushop/services/auth_controller.dart';
-import 'package:otakushop/seller/seller_page.dart';
+import '../seller/user_profile_page.dart';
+import '../services/cart_service.dart';
+import '../services/auth_controller.dart';
+import '../seller/seller_page.dart';
 import '../pages/cart_page.dart';
 
 class PinkNavbar extends StatelessWidget implements PreferredSizeWidget {

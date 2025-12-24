@@ -161,29 +161,63 @@ class SellerProductService {
     required String description,
     required String category,
     required String stock,
+    List<XFile>? newImages,
+    List<String>? imagesToDelete,
   }) async {
     final url = '${AuthController.baseUrl}/store/$storeId/products/$productId';
 
     debugPrint("🟦 [UPDATE PRODUCT]");
-    debugPrint("🌐 PUT $url");
+    debugPrint("🌐 POST (Method: PUT) $url");
 
-    final response = await http.put(
-      Uri.parse(url),
-      headers: auth.headers(json: false),
-      body: {
-        'name': name,
-        'price': price,
-        'description': description,
-        'category': category,
-        'stock': stock,
-      },
-    );
+    final uri = Uri.parse(url);
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll(auth.headers(json: false));
+
+    // Method spoofing untuk Laravel (agar dianggap PUT meski pakai Multipart POST)
+    request.fields['_method'] = 'PUT';
+
+    request.fields['name'] = name;
+    request.fields['price'] = price;
+    request.fields['description'] = description;
+    request.fields['category'] = category;
+    request.fields['stock'] = stock;
+
+    // Handle Images to Delete
+    if (imagesToDelete != null && imagesToDelete.isNotEmpty) {
+      for (int i = 0; i < imagesToDelete.length; i++) {
+        request.fields['images_to_delete[$i]'] = imagesToDelete[i];
+      }
+    }
+
+    // Handle New Images
+    if (newImages != null && newImages.isNotEmpty) {
+      for (var img in newImages) {
+        if (kIsWeb) {
+          final bytes = await img.readAsBytes();
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'new_images[]',
+              bytes,
+              filename: img.name,
+            ),
+          );
+        } else {
+          request.files.add(
+            await http.MultipartFile.fromPath('new_images[]', img.path),
+          );
+        }
+      }
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
     debugPrint("📡 STATUS = ${response.statusCode}");
     debugPrint("📡 BODY = ${response.body}");
 
     if (response.statusCode != 200) {
-      throw Exception('Update produk gagal');
+      throw Exception('Update produk gagal: ${response.body}');
     }
   }
 

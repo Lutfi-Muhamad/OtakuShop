@@ -39,7 +39,7 @@ class PromoPage extends StatelessWidget {
                 margin: EdgeInsets.all(16),
                 height: 180,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).colorScheme.surfaceVariant,
                   borderRadius: BorderRadius.circular(12),
                   image: hasImage
                       ? DecorationImage(

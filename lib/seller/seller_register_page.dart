@@ -5,22 +5,15 @@ import '../services/auth_controller.dart';
 import 'package:get/get.dart';
 import 'seller_page.dart';
 
-class SellerRegisterPage extends StatefulWidget {
-  const SellerRegisterPage({super.key});
-
-  @override
-  State<SellerRegisterPage> createState() => _SellerRegisterPageState();
-}
-
-class _SellerRegisterPageState extends State<SellerRegisterPage> {
+class SellerRegisterController extends GetxController {
   final TextEditingController nameCtrl = TextEditingController();
   final TextEditingController numberCtrl = TextEditingController();
   final TextEditingController addressCtrl = TextEditingController();
 
-  bool loading = false;
+  var loading = false.obs;
 
   Future<void> submitStore() async {
-    setState(() => loading = true);
+    loading.value = true;
 
     try {
       final result = await StoreService.registerStore(
@@ -33,16 +26,19 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
       print("REGISTER STORE RESULT:");
       print(result);
 
-      setState(() => loading = false);
+      loading.value = false;
 
       // Timeout / error di service
       if (result["success"] == false && result.containsKey("error")) {
         print("ERROR TYPE: SERVICE / NETWORK");
         print("ERROR MESSAGE: ${result['error']}");
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal: ${result['error']}")));
+        Get.snackbar(
+          "Gagal",
+          result['error'],
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
         return;
       }
 
@@ -63,29 +59,52 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
       print("ERROR TYPE: BACKEND RESPONSE");
       print("STATUS / BODY: ${result['body']}");
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Gagal: ${result['body']}")));
+      Get.snackbar(
+        "Gagal",
+        result['body'],
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } catch (e, stack) {
-      setState(() => loading = false);
+      loading.value = false;
 
       // ERROR YANG BENAR-BENAR GA KETANGKAP
       print("FATAL ERROR REGISTER STORE");
       print(e);
       print(stack);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Terjadi kesalahan tak terduga")),
+      Get.snackbar(
+        "Error",
+        "Terjadi kesalahan tak terduga",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
 
   @override
+  void onClose() {
+    nameCtrl.dispose();
+    numberCtrl.dispose();
+    addressCtrl.dispose();
+    super.onClose();
+  }
+}
+
+class SellerRegisterPage extends StatelessWidget {
+  const SellerRegisterPage({super.key});
+
+  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(SellerRegisterController());
     return Scaffold(
-      backgroundColor: const Color(0xFFF57CA1),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFF57CA1),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF57CA1),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).appBarTheme.backgroundColor
+            : const Color(0xFFF57CA1),
         title: const Text("Daftar Toko", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -95,31 +114,31 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
         child: Column(
           children: [
             TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(
+              controller: controller.nameCtrl,
+              decoration: InputDecoration(
                 labelText: "Nama Toko",
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
             ),
             const SizedBox(height: 15),
 
             TextField(
-              controller: numberCtrl,
-              decoration: const InputDecoration(
+              controller: controller.numberCtrl,
+              decoration: InputDecoration(
                 labelText: "Nomor Toko",
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
             ),
             const SizedBox(height: 15),
 
             TextField(
-              controller: addressCtrl,
-              decoration: const InputDecoration(
+              controller: controller.addressCtrl,
+              decoration: InputDecoration(
                 labelText: "Alamat Toko",
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).cardColor,
               ),
             ),
 
@@ -129,17 +148,26 @@ class _SellerRegisterPageState extends State<SellerRegisterPage> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFF57CA1),
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                      ? Colors.pink
+                      : Colors.white,
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : const Color(0xFFF57CA1),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: loading ? null : submitStore,
-                child: Text(
-                  loading ? "Memuat..." : "Daftarkan Toko",
-                  style: const TextStyle(fontSize: 18),
+                onPressed: () =>
+                    controller.loading.value ? null : controller.submitStore(),
+                child: Obx(
+                  () => Text(
+                    controller.loading.value ? "Memuat..." : "Daftarkan Toko",
+                    style: const TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
             ),

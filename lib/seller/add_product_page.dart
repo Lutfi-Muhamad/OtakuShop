@@ -6,22 +6,16 @@ import 'package:otakushop/services/seller_product_service.dart';
 import 'package:get/get.dart';
 import 'package:otakushop/services/auth_controller.dart';
 
-class AddProductPage extends StatefulWidget {
-  const AddProductPage({super.key});
-
-  @override
-  State<AddProductPage> createState() => _AddProductPageState();
-}
-
-class _AddProductPageState extends State<AddProductPage> {
+class AddProductController extends GetxController {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
 
-  String? selectedSeries;
-  String? selectedCategory;
-  List<XFile> selectedImages = []; // Ubah ke XFile
+  var selectedSeries = RxnString();
+  var selectedCategory = RxnString();
+  var selectedImages = <XFile>[].obs;
+  var isLoading = false.obs;
 
   final ImagePicker picker = ImagePicker();
   final SellerProductService productService = SellerProductService();
@@ -35,9 +29,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
     if (files.isEmpty) return;
 
-    setState(() {
-      selectedImages = files; // Langsung simpan XFile
-    });
+    selectedImages.assignAll(files);
   }
 
   // ==============================
@@ -46,8 +38,8 @@ class _AddProductPageState extends State<AddProductPage> {
   Widget choiceSeries(String title, String value) {
     return _choiceBox(
       title: title,
-      selected: selectedSeries == value,
-      onTap: () => setState(() => selectedSeries = value),
+      selected: selectedSeries.value == value,
+      onTap: () => selectedSeries.value = value,
     );
   }
 
@@ -57,8 +49,8 @@ class _AddProductPageState extends State<AddProductPage> {
   Widget choiceCategory(String title, String value) {
     return _choiceBox(
       title: title,
-      selected: selectedCategory == value,
-      onTap: () => setState(() => selectedCategory = value),
+      selected: selectedCategory.value == value,
+      onTap: () => selectedCategory.value = value,
     );
   }
 
@@ -70,16 +62,16 @@ class _AddProductPageState extends State<AddProductPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? Colors.pink : Colors.white,
+          color: selected ? Colors.pink : Get.theme.cardColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey),
+          border: Border.all(color: Get.theme.colorScheme.outline),
         ),
         child: Text(
           title,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.black,
+            color: selected ? Colors.white : Get.theme.colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -91,17 +83,19 @@ class _AddProductPageState extends State<AddProductPage> {
   // SUBMIT
   // ==============================
   Future<void> submitProduct() async {
+    if (isLoading.value) return;
+
     // if (selectedImages.isEmpty) {
     //   showMsg("Pilih minimal 1 foto");
     //   return;
     // }
 
-    if (selectedSeries == null) {
+    if (selectedSeries.value == null) {
       showMsg("Pilih series produk");
       return;
     }
 
-    if (selectedCategory == null) {
+    if (selectedCategory.value == null) {
       showMsg("Pilih kategori produk");
       return;
     }
@@ -114,44 +108,70 @@ class _AddProductPageState extends State<AddProductPage> {
       return;
     }
 
+    isLoading.value = true;
+
     try {
       final result = await productService.createProduct(
         name: nameController.text,
-        category: selectedCategory!, // ← TERKIRIM
+        category: selectedCategory.value!,
         description: descController.text,
         price: int.parse(priceController.text),
         stock: int.parse(stockController.text),
         tokoId: auth.user.value?.tokoId ?? 0,
-        folder: selectedSeries!, // 🔥 Kirim series sebagai folder
+        folder: selectedSeries.value!,
         images: selectedImages,
       );
 
-      if (!mounted) return;
-
       if (result["success"] == true) {
-        Navigator.pop(context, true);
+        Get.back(result: true);
         showMsg("Produk berhasil ditambahkan");
       } else {
         showMsg(result["message"] ?? "Gagal upload produk");
       }
     } catch (e) {
       showMsg("Koneksi ke server gagal");
+    } finally {
+      isLoading.value = false;
     }
   }
 
   void showMsg(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    Get.snackbar(
+      "Info",
+      msg,
+      backgroundColor: Colors.black54,
+      colorText: Colors.white,
+    );
   }
+
+  @override
+  void onClose() {
+    nameController.dispose();
+    descController.dispose();
+    priceController.dispose();
+    stockController.dispose();
+    super.onClose();
+  }
+}
+
+class AddProductPage extends StatelessWidget {
+  const AddProductPage({super.key});
 
   // ==============================
   // BUILD UI
   // ==============================
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(AddProductController());
+
     return Scaffold(
-      backgroundColor: const Color(0xffe56484),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xffe56484),
       appBar: AppBar(
-        backgroundColor: const Color(0xffe56484),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).appBarTheme.backgroundColor
+            : const Color(0xffe56484),
         elevation: 0,
         title: const Text(
           "Add Product",
@@ -164,7 +184,7 @@ class _AddProductPageState extends State<AddProductPage> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -177,7 +197,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 const SizedBox(height: 12),
 
                 GestureDetector(
-                  onTap: pickImages,
+                  onTap: controller.pickImages,
                   child: Container(
                     height: 160,
                     decoration: BoxDecoration(
@@ -185,26 +205,27 @@ class _AddProductPageState extends State<AddProductPage> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.black54),
                     ),
-                    child: selectedImages.isEmpty
-                        ? const Center(
-                            child: Icon(
-                              Icons.camera_alt,
-                              size: 60,
-                              color: Colors.grey,
+                    child: Obx(
+                      () => controller.selectedImages.isEmpty
+                          ? const Center(
+                              child: Icon(
+                                Icons.camera_alt,
+                                size: 60,
+                                color: Colors.grey,
+                              ),
+                            )
+                          : ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: controller.selectedImages.map((img) {
+                                return Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: kIsWeb
+                                      ? Image.network(img.path, height: 150)
+                                      : Image.file(File(img.path), height: 150),
+                                );
+                              }).toList(),
                             ),
-                          )
-                        : ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: selectedImages.map((img) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8),
-                                // 🔥 Cek Web atau Mobile untuk display gambar
-                                child: kIsWeb
-                                    ? Image.network(img.path, height: 150)
-                                    : Image.file(File(img.path), height: 150),
-                              );
-                            }).toList(),
-                          ),
+                    ),
                   ),
                 ),
 
@@ -215,12 +236,14 @@ class _AddProductPageState extends State<AddProductPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    choiceSeries("One Piece", "onepiece"),
-                    choiceSeries("JJK", "jjk"),
-                  ],
+                Obx(
+                  () => Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      controller.choiceSeries("One Piece", "onepiece"),
+                      controller.choiceSeries("JJK", "jjk"),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 25),
@@ -230,36 +253,63 @@ class _AddProductPageState extends State<AddProductPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    choiceCategory("Nendoroid", "nendoroid"),
-                    choiceCategory("Bags", "bags"),
-                    choiceCategory("Figure", "figure"),
-                  ],
+                Obx(
+                  () => Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      controller.choiceCategory("Nendoroid", "nendoroid"),
+                      controller.choiceCategory("Bags", "bags"),
+                      controller.choiceCategory("Figure", "figure"),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 25),
 
-                makeField("Nama Produk", nameController),
+                makeField(context, "Nama Produk", controller.nameController),
                 const SizedBox(height: 16),
-                makeField("Harga", priceController, type: TextInputType.number),
+                makeField(
+                  context,
+                  "Harga",
+                  controller.priceController,
+                  type: TextInputType.number,
+                ),
                 const SizedBox(height: 16),
-                makeField("Stok", stockController, type: TextInputType.number),
+                makeField(
+                  context,
+                  "Stok",
+                  controller.stockController,
+                  type: TextInputType.number,
+                ),
                 const SizedBox(height: 16),
-                makeField("Deskripsi", descController, lines: 4),
+                makeField(
+                  context,
+                  "Deskripsi",
+                  controller.descController,
+                  lines: 4,
+                ),
                 const SizedBox(height: 25),
 
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: submitProduct,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pink,
-                    ),
-                    child: const Text(
-                      "Confirm",
-                      style: TextStyle(color: Colors.white),
+                  child: Obx(
+                    () => ElevatedButton(
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : controller.submitProduct,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pink,
+                      ),
+                      child: controller.isLoading.value
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text(
+                              "Confirm",
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                 ),
@@ -272,6 +322,7 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Widget makeField(
+    BuildContext context,
     String title,
     TextEditingController c, {
     int lines = 1,
@@ -291,7 +342,7 @@ class _AddProductPageState extends State<AddProductPage> {
           maxLines: lines,
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.grey.shade200,
+            fillColor: Theme.of(context).colorScheme.surfaceVariant,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

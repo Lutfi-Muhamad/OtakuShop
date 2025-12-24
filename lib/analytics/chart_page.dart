@@ -138,12 +138,18 @@ class _ChartPageState extends State<ChartPage> {
             child: Container(
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.pink.shade50,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
               child: Text(
                 DateFormat('MMM').format(month),
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
           );
@@ -167,12 +173,22 @@ class _ChartPageState extends State<ChartPage> {
       maxY = ((maxValue / 10).ceil() * 10).toDouble();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFEEF3),
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFFFEEF3),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF87DAF),
-        title: const Text('Sales Report'),
+        backgroundColor: isDark
+            ? Theme.of(context).appBarTheme.backgroundColor
+            : const Color(0xFFF87DAF),
+        title: Text(
+          'Sales Report',
+          style: TextStyle(color: isDark ? Colors.white : Colors.white),
+        ),
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
@@ -226,13 +242,15 @@ class _ChartPageState extends State<ChartPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? Colors.pink : Colors.white,
+          color: active ? Colors.pink : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: active ? Colors.white : Colors.black,
+            color: active
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -250,7 +268,7 @@ class _ChartPageState extends State<ChartPage> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: SingleChildScrollView(

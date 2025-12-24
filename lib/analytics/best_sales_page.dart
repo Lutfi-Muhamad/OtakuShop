@@ -62,12 +62,24 @@ class _BestSalesPageState extends State<BestSalesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFF7FAF),
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFFF7FAF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF7FAF),
+        backgroundColor: isDark
+            ? Theme.of(context).appBarTheme.backgroundColor
+            : const Color(0xFFFF7FAF),
         elevation: 0,
         title: const Text('Best Sales'),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black),
+        titleTextStyle: TextStyle(
+          color: isDark ? Colors.white : Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       body: Column(
         children: [
@@ -148,6 +160,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
   // ================= CONTENT =================
 
   Widget _content() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_futureBestSales == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -163,7 +176,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
           return Center(
             child: Text(
               snapshot.error.toString(),
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
             ),
           );
         }
@@ -172,10 +185,7 @@ class _BestSalesPageState extends State<BestSalesPage> {
 
         if (products.isEmpty) {
           return const Center(
-            child: Text(
-              'Belum ada data penjualan',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: Text('Belum ada data penjualan', style: TextStyle()),
           );
         }
 
@@ -190,11 +200,12 @@ class _BestSalesPageState extends State<BestSalesPage> {
   }
 
   Widget _bestSellerCard({required SoldProduct product, required int rank}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -212,7 +223,9 @@ class _BestSalesPageState extends State<BestSalesPage> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.pink.shade50,
+              color: isDark
+                  ? Theme.of(context).colorScheme.surfaceVariant
+                  : Colors.pink.shade50,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.shopping_bag, color: Colors.pink),

@@ -34,7 +34,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             return IconButton(
               icon: Icon(
                 isWishlisted ? Icons.favorite : Icons.favorite_border,
-                color: isWishlisted ? Colors.pink : Colors.black,
+                color: isWishlisted
+                    ? Colors.pink
+                    : null, // null = ikut tema (putih di dark mode)
               ),
               onPressed: () => wishlistController.toggleWishlist(product),
             );
@@ -123,9 +125,13 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant, // Ikut tema
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -146,7 +152,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                   product.storeAddress,
                                   style: const TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: Colors
+                                        .grey, // Grey masih aman di dark mode
                                   ),
                                 ),
                             ],
@@ -204,7 +211,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(
+                context,
+              ).colorScheme.surface, // Background bawah ikut tema
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -218,7 +227,9 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 // QUANTITY SELECTOR
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

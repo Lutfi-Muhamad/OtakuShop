@@ -23,7 +23,7 @@ class ProductCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: const [
             BoxShadow(

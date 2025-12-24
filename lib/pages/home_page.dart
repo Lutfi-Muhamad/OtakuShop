@@ -177,7 +177,7 @@ class HomePage extends StatelessWidget {
                       ),
 
                     const SizedBox(height: 20),
-                    _buildCategories(controller),
+                    _buildCategories(context, controller),
                     const SizedBox(height: 10),
                     _buildFilters(
                       context,
@@ -198,7 +198,7 @@ class HomePage extends StatelessWidget {
                     ),
 
                     // TRENDING (WIDE)
-                    if (wides.isNotEmpty) _buildTrending(wides.first),
+                    if (wides.isNotEmpty) _buildTrending(context, wides.first),
 
                     // 🔥 SEPARATOR SETELAH TRENDING
                     const Padding(
@@ -258,19 +258,26 @@ class HomePage extends StatelessWidget {
   }
 
   // ==================== CATEGORIES ====================
-  Widget _buildCategories(HomeController controller) {
+  Widget _buildCategories(BuildContext context, HomeController controller) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _categoryItem(controller, Icons.apps, "All", "All"),
-        _categoryItem(controller, Icons.toys, "Nendoroid", "nendoroid"),
-        _categoryItem(controller, Icons.backpack, "Backpack", "bags"),
-        _categoryItem(controller, Icons.star, "Figure", "figure"),
+        _categoryItem(context, controller, Icons.apps, "All", "All"),
+        _categoryItem(
+          context,
+          controller,
+          Icons.toys,
+          "Nendoroid",
+          "nendoroid",
+        ),
+        _categoryItem(context, controller, Icons.backpack, "Backpack", "bags"),
+        _categoryItem(context, controller, Icons.star, "Figure", "figure"),
       ],
     );
   }
 
   Widget _categoryItem(
+    BuildContext context,
     HomeController controller,
     IconData icon,
     String label,
@@ -283,18 +290,24 @@ class HomePage extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: isSelected ? Colors.pink : Colors.grey.shade200,
+            backgroundColor: isSelected
+                ? Colors.pink
+                : Theme.of(context).colorScheme.surfaceVariant,
             child: Icon(
               icon,
               size: 30,
-              color: isSelected ? Colors.white : Colors.grey,
+              color: isSelected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.pink : Colors.black,
+              color: isSelected
+                  ? Colors.pink
+                  : Theme.of(context).colorScheme.onSurface,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -326,14 +339,22 @@ class HomePage extends StatelessWidget {
                 Wrap(
                   spacing: 10,
                   children: [
-                    _filterChip(controller, "All", "All", isSeries: true),
                     _filterChip(
+                      context,
+                      controller,
+                      "All",
+                      "All",
+                      isSeries: true,
+                    ),
+                    _filterChip(
+                      context,
                       controller,
                       "One Piece",
                       "onepiece",
                       isSeries: true,
                     ),
                     _filterChip(
+                      context,
                       controller,
                       "Jujutsu Kaisen",
                       "jjk",
@@ -350,9 +371,22 @@ class HomePage extends StatelessWidget {
                 Wrap(
                   spacing: 10,
                   children: [
-                    _filterChip(controller, "Default", "none", isSeries: false),
-                    _filterChip(controller, "Termurah", "asc", isSeries: false),
                     _filterChip(
+                      context,
+                      controller,
+                      "Default",
+                      "none",
+                      isSeries: false,
+                    ),
+                    _filterChip(
+                      context,
+                      controller,
+                      "Termurah",
+                      "asc",
+                      isSeries: false,
+                    ),
+                    _filterChip(
+                      context,
                       controller,
                       "Termahal",
                       "desc",
@@ -381,7 +415,7 @@ class HomePage extends StatelessWidget {
                       controller.selectedSeries.value != 'All' ||
                           controller.sortPrice.value != 'none'
                       ? Colors.pink
-                      : Colors.black,
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
@@ -392,6 +426,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _filterChip(
+    BuildContext context,
     HomeController controller,
     String label,
     String value, {
@@ -419,20 +454,23 @@ class HomePage extends StatelessWidget {
                   ? controller.selectedSeries.value == value
                   : controller.sortPrice.value == value)
               ? Colors.white
-              : Colors.black,
+              : Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
   }
 
   // ==================== TRENDING (WIDE) ====================
-  Widget _buildTrending(Product p) {
+  Widget _buildTrending(BuildContext context, Product p) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: double.infinity,
-          color: Colors.orange.shade50,
+          color: isDark
+              ? Theme.of(context).colorScheme.surfaceVariant
+              : Colors.orange.shade50,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           child: Row(
             children: [
@@ -443,7 +481,7 @@ class HomePage extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
-                  color: Colors.orange.shade900,
+                  color: isDark ? Colors.orangeAccent : Colors.orange.shade900,
                 ),
               ),
             ],

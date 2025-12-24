@@ -54,7 +54,9 @@ class RegisterPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF87DAF),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFF87DAF),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -62,11 +64,13 @@ class RegisterPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              const Center(
+              Center(
                 child: Text(
                   "Register",
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
@@ -74,21 +78,27 @@ class RegisterPage extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              const Text("Name", style: TextStyle(color: Colors.white)),
+              const Text("Name", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
-              _input(name),
+              _input(context, name),
 
               const SizedBox(height: 20),
 
-              const Text("Email", style: TextStyle(color: Colors.white)),
+              const Text(
+                "Email",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
-              _input(email),
+              _input(context, email),
 
               const SizedBox(height: 20),
 
-              const Text("Password", style: TextStyle(color: Colors.white)),
+              const Text(
+                "Password",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
-              _input(password, isPassword: true),
+              _input(context, password, isPassword: true),
 
               const SizedBox(height: 30),
 
@@ -96,7 +106,10 @@ class RegisterPage extends StatelessWidget {
                 () => Center(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? Colors.pink
+                          : Colors.white,
                       minimumSize: const Size(double.infinity, 45),
                     ),
                     onPressed: loading.value ? null : doRegister,
@@ -106,9 +119,15 @@ class RegisterPage extends StatelessWidget {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text(
+                        : Text(
                             "Create Account",
-                            style: TextStyle(color: Colors.pink),
+                            style: TextStyle(
+                              color:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.pink,
+                            ),
                           ),
                   ),
                 ),
@@ -119,10 +138,7 @@ class RegisterPage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Sudah punya akun?",
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  const Text("Sudah punya akun?", style: TextStyle()),
                   TextButton(
                     onPressed: () {
                       Navigator.push(
@@ -132,7 +148,7 @@ class RegisterPage extends StatelessWidget {
                     },
                     child: const Text(
                       "Login",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.pinkAccent),
                     ),
                   ),
                 ],
@@ -146,10 +162,14 @@ class RegisterPage extends StatelessWidget {
     );
   }
 
-  Widget _input(TextEditingController controller, {bool isPassword = false}) {
+  Widget _input(
+    BuildContext context,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceVariant,
         borderRadius: BorderRadius.circular(8),
       ),
       child: TextField(

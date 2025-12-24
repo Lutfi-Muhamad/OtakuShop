@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:otakushop/services/auth_controller.dart';
-import 'package:otakushop/seller/seller_page.dart';
-import 'package:otakushop/seller/seller_register_page.dart';
+import '../services/auth_controller.dart';
+import '../seller/seller_page.dart';
+import '../seller/seller_register_page.dart';
 import '../pages/profile_edit_page.dart';
 import '../pages/order_history_page.dart';
 import '../pages/wishlist_page.dart';
@@ -28,7 +28,9 @@ class UserPage extends StatelessWidget {
       }
 
       return Scaffold(
-        backgroundColor: const Color(0xFFF57CA1),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).scaffoldBackgroundColor
+            : const Color(0xFFF57CA1),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -41,7 +43,12 @@ class UserPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.white,
+                        ),
                         onPressed: () => Get.back(),
                       ),
                       IconButton(
@@ -79,7 +86,7 @@ class UserPage extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
@@ -105,6 +112,7 @@ class UserPage extends StatelessWidget {
 
                   // ---------------- MENU
                   menuButton(
+                    context,
                     user.tokoId == null ? "Belum ada toko" : "Toko saya",
                     () async {
                       await auth.refreshUser();
@@ -115,13 +123,13 @@ class UserPage extends StatelessWidget {
                       }
                     },
                   ),
-                  menuButton("Order History", () {
+                  menuButton(context, "Order History", () {
                     Get.to(() => const OrderHistoryPage());
                   }),
-                  menuButton("Wishlist", () {
+                  menuButton(context, "Wishlist", () {
                     Get.to(() => const WishlistPage());
                   }),
-                  menuButton("Logout", () {
+                  menuButton(context, "Logout", () {
                     Get.dialog(
                       AlertDialog(
                         title: const Text("Logout"),
@@ -214,12 +222,12 @@ class UserPage extends StatelessWidget {
     );
   }
 
-  Widget menuButton(String text, VoidCallback onTap) {
+  Widget menuButton(BuildContext context, String text, VoidCallback onTap) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       width: double.infinity,
       child: Material(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(6),
         child: InkWell(
           onTap: onTap,
